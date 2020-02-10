@@ -20,18 +20,15 @@ import java.util.regex.Pattern;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 
 /**
- * Superclass for all Alarm Decoder protocol message types.
- * Includes code from the original OH1 alarmdecoder binding by Bernd Pfrommer.
+ * Superclass for all Alarm Decoder protocol message types
  *
  * @author Bob Adair - Initial contribution
  */
 @NonNullByDefault
 public abstract class ADMessage {
 
-    protected static final Pattern SPLIT_REGEX = Pattern.compile("[^\\,\"]+|\"[^\"]*\"");
-
     /** string containing the original unparsed message */
-    public final String message;
+    public String message;
 
     public ADMessage(String message) {
         this.message = message;
@@ -39,13 +36,13 @@ public abstract class ADMessage {
 
     @Override
     public String toString() {
-        return message;
+        return new String(message);
     }
 
-    /** Utility routine to split an AD message into its component parts */
-    protected static List<String> splitMsg(String msg) {
+    protected List<String> splitMsg(String msg) {
         List<String> l = new ArrayList<String>();
-        Matcher regexMatcher = SPLIT_REGEX.matcher(msg);
+        Pattern regex = Pattern.compile("[^\\,\"]+|\"[^\"]*\"");
+        Matcher regexMatcher = regex.matcher(msg);
         while (regexMatcher.find()) {
             l.add(regexMatcher.group());
         }

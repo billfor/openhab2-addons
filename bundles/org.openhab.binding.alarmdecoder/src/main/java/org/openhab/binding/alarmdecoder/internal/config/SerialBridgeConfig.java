@@ -12,16 +12,14 @@
  */
 package org.openhab.binding.alarmdecoder.internal.config;
 
-import org.eclipse.jdt.annotation.NonNullByDefault;
-
 /**
- * The {@link SerialBridgeConfig} class contains fields mapping thing configuration parameters for SerialBridgeHandler.
+ * The {@link SerialBridgeConfig} class contains fields mapping thing configuration parameters.
  *
  * @author Bob Adair - Initial contribution
  */
-@NonNullByDefault
 public class SerialBridgeConfig {
-    public String serialPort = "";
-    public int bitrate = 115200;
+    public String serialPort;
+    public Integer bitrate;
+    public boolean sendCommands = false;
     public boolean discovery = false;
 }

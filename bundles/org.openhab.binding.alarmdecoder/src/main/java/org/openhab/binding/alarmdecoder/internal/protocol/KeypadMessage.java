@@ -15,7 +15,6 @@ package org.openhab.binding.alarmdecoder.internal.protocol;
 import java.util.List;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
-import org.eclipse.jdt.annotation.Nullable;
 
 /**
  * The {@link KeypadMessage} class represents a parsed keypad (KPM) message.
@@ -65,9 +64,9 @@ public class KeypadMessage extends ADMessage {
             throw new IllegalArgumentException("Invalid field length in keypad message");
         }
 
-        bitField = parts.get(0);
-        rawData = parts.get(2);
-        alphaMessage = parts.get(3).replaceAll("^\"|\"$", "");
+        bitField = parts.get(0); // TODO: need to remove enclosing []
+        rawData = parts.get(2); // need to remove enclosing []
+        alphaMessage = parts.get(3); // need to remove enclosing ""
 
         try {
             int numeric = 0;
@@ -84,7 +83,7 @@ public class KeypadMessage extends ADMessage {
             this.status = ((upper & 0x1F) << 13) | ((nbeeps & 0x3) << 10) | lower;
 
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("keypad msg contains invalid number: " + e.getMessage(), e);
+            throw new IllegalArgumentException("keypad msg contains invalid number: " + e.getMessage());
         }
     }
 
@@ -96,7 +95,7 @@ public class KeypadMessage extends ADMessage {
      * Returns a string containing the keypad text
      */
     public String getText() {
-        return alphaMessage;
+        return new String(alphaMessage);
     }
 
     /**
@@ -129,26 +128,5 @@ public class KeypadMessage extends ADMessage {
      */
     public int getIntAddressMask() {
         return Integer.parseInt(getAddressMask(), 16);
-    }
-
-    /**
-     * Compares two KeypadMessage objects
-     *
-     * @param obj KeypadMessage to compare against
-     * @return true if messages are equal, false if obj is null, messages are not equal, or obj is not a KeypadMessage
-     *         object.
-     */
-    @Override
-    public boolean equals(@Nullable Object obj) {
-        if (obj == null) {
-            return false;
-        } else if (this == obj) {
-            return true;
-        } else if (obj instanceof KeypadMessage) {
-            KeypadMessage other = (KeypadMessage) obj;
-            return this.message.equals(other.message);
-        } else {
-            return false;
-        }
     }
 }

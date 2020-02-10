@@ -12,19 +12,11 @@
  */
 package org.openhab.binding.alarmdecoder.internal.config;
 
-import static org.openhab.binding.alarmdecoder.internal.AlarmDecoderBindingConstants.DEFAULT_MAPPING;
-
-import org.eclipse.jdt.annotation.NonNullByDefault;
-
 /**
- * The {@link KeypadConfig} class contains fields mapping thing configuration parameters for KeypadHandler.
+ * The {@link KeypadConfig} class contains fields mapping thing configuration parameters.
  *
  * @author Bob Adair - Initial contribution
  */
-@NonNullByDefault
 public class KeypadConfig {
-    public int addressMask = 0;
-    public boolean sendCommands = false;
-    public boolean sendStar = false;
-    public String commandMapping = DEFAULT_MAPPING;
+    public Integer addressMask;
 }

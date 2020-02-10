@@ -17,11 +17,9 @@ import static org.openhab.binding.alarmdecoder.internal.AlarmDecoderBindingConst
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -39,7 +37,6 @@ import org.eclipse.smarthome.core.types.Command;
 import org.openhab.binding.alarmdecoder.internal.AlarmDecoderDiscoveryService;
 import org.openhab.binding.alarmdecoder.internal.actions.BridgeActions;
 import org.openhab.binding.alarmdecoder.internal.protocol.ADCommand;
-import org.openhab.binding.alarmdecoder.internal.protocol.ADMessage;
 import org.openhab.binding.alarmdecoder.internal.protocol.ADMsgType;
 import org.openhab.binding.alarmdecoder.internal.protocol.EXPMessage;
 import org.openhab.binding.alarmdecoder.internal.protocol.KeypadMessage;
@@ -58,21 +55,19 @@ import org.slf4j.LoggerFactory;
  */
 @NonNullByDefault
 public abstract class ADBridgeHandler extends BaseBridgeHandler {
-    protected static final Charset AD_CHARSET = StandardCharsets.UTF_8;
 
     private final Logger logger = LoggerFactory.getLogger(ADBridgeHandler.class);
 
     protected @Nullable BufferedReader reader = null;
     protected @Nullable BufferedWriter writer = null;
     protected @Nullable Thread msgReaderThread = null;
-    private final Object msgReaderThreadLock = new Object();
+    protected boolean sendCommands = false;
     protected @Nullable AlarmDecoderDiscoveryService discoveryService;
     protected boolean discovery;
     protected boolean panelReadyReceived = false;
-    protected volatile @Nullable Date lastReceivedTime;
-    protected volatile boolean writeException;
 
     protected @Nullable ScheduledFuture<?> connectionCheckJob;
+    protected @Nullable ScheduledFuture<?> connectionCheckReconnectJob;
     protected @Nullable ScheduledFuture<?> connectRetryJob;
 
     public ADBridgeHandler(Bridge bridge) {
@@ -81,8 +76,7 @@ public abstract class ADBridgeHandler extends BaseBridgeHandler {
 
     @Override
     public void dispose() {
-        logger.trace("dispose called");
-        disconnect();
+        disconnect(); // moved from OH1 deactivate() method
     }
 
     @Override
@@ -96,7 +90,36 @@ public abstract class ADBridgeHandler extends BaseBridgeHandler {
 
     @Override
     public void handleCommand(ChannelUID channelUID, Command command) {
-        // Accepts no commands, so do nothing.
+        // TODO
+
+        // Moved from OH1 internalReceiveCommand(String itemName, Command command) method:
+
+        if (!sendCommands) {
+            logger.warn("sending commands is disabled. Enable it using the sendCommands option.");
+            return;
+        }
+
+        // String param = "INVALID";
+        // if (command instanceof OnOffType) {
+        // OnOffType cmd = (OnOffType) command;
+        // param = cmd.equals(OnOffType.ON) ? "ON" : "OFF";
+        // } else if (command instanceof DecimalType) {
+        // param = ((DecimalType) command).toString();
+        // } else {
+        // logger.info("item {} only accepts DecimalType and OnOffType", itemName);
+        // return;
+        // }
+        //
+        // ArrayList<AlarmDecoderBindingConfig> bcl = getItems(itemName);
+        // for (AlarmDecoderBindingConfig bc : bcl) {
+        // String sendStr = bc.getParameters().get(param);
+        // if (sendStr == null) {
+        // logger.info("{} has no mapping for command {}!", itemName, param);
+        // } else {
+        // String s = sendStr.replace("POUND", "#");
+        // sendADCommand(new ADCommand(s));
+        // }
+        // }
     }
 
     /**
@@ -106,16 +129,15 @@ public abstract class ADBridgeHandler extends BaseBridgeHandler {
      * @param command Command string to send including terminator
      */
     public void sendADCommand(ADCommand command) {
-        logger.debug("Sending AD command: {}", command);
         try {
-            BufferedWriter bw = writer;
-            if (bw != null) {
-                bw.write(command.toString());
-                bw.flush();
+            if (writer != null) {
+                writer.write(command.toString());
+                writer.flush();
             }
         } catch (IOException e) {
             logger.info("Exception while sending command: {}", e.getMessage());
-            writeException = true;
+            // TODO: close connection so it will be re-opened
+            // disconnect();
         }
     }
 
@@ -129,22 +151,20 @@ public abstract class ADBridgeHandler extends BaseBridgeHandler {
     }
 
     protected void startMsgReader() {
-        synchronized (msgReaderThreadLock) {
-            Thread mrt = new Thread(this::readerThread, "AD Reader");
-            mrt.setDaemon(true);
-            mrt.start();
-            msgReaderThread = mrt;
-        }
+        msgReaderThread = new Thread(this::readerThread, "AD Reader");
+        msgReaderThread.start();
     }
 
     protected void stopMsgReader() {
-        synchronized (msgReaderThreadLock) {
-            Thread mrt = msgReaderThread;
-            if (mrt != null) {
-                logger.trace("Stopping reader thread.");
-                mrt.interrupt();
-                msgReaderThread = null;
+        if (msgReaderThread != null) {
+            try {
+                msgReaderThread.interrupt();
+                // wait for thread to stop
+                msgReaderThread.join();
+            } catch (InterruptedException e) {
+                // do nothing
             }
+            msgReaderThread = null;
         }
     }
 
@@ -153,56 +173,50 @@ public abstract class ADBridgeHandler extends BaseBridgeHandler {
      */
     private void readerThread() {
         logger.debug("Message reader thread started");
-        String message = null;
+        String msg = null;
         try {
-            // Send version command to get device to respond with VER message.
+            // TODO: Send a version command here to get device to respond with VER message.
             sendADCommand(ADCommand.getVersion());
-            BufferedReader reader = this.reader;
-            while (!Thread.interrupted() && reader != null && (message = reader.readLine()) != null) {
-                logger.trace("Received msg: {}", message);
-                ADMsgType msgType = ADMsgType.getMsgType(message);
-                if (msgType != ADMsgType.INVALID) {
-                    lastReceivedTime = new Date();
-                }
+            while (reader != null && (msg = reader.readLine()) != null) {
+                logger.trace("Received msg: {}", msg);
+                ADMsgType mt = ADMsgType.getMsgType(msg);
                 try {
-                    switch (msgType) {
+                    switch (mt) {
                         case KPM:
-                            parseKeypadMessage(message);
+                            parseKeypadMessage(msg);
                             break;
                         case REL:
                         case EXP:
-                            parseRelayOrExpanderMessage(msgType, message);
+                            parseRelayOrExpanderMessage(mt, msg);
                             break;
                         case RFX:
-                            parseRFMessage(message);
+                            parseRFMessage(msg);
                             break;
                         case LRR:
-                            parseLRRMessage(message);
+                            parseLRRMessage(msg);
                             break;
                         case VER:
-                            parseVersionMessage(message);
+                            parseVersionMessage(msg);
                             break;
                         case INVALID:
                         default:
                             break;
                     }
                 } catch (MessageParseException e) {
-                    logger.warn("Error {} while parsing message {}. Please report bug.", e.getMessage(), message);
+                    logger.info("Error {} while parsing message {}", e.getMessage(), msg);
                 }
             }
-            if (message == null) {
-                logger.info("End of input stream detected");
+            if (msg == null) {
+                logger.warn("End of input stream detected");
                 updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, "Connection lost");
             }
         } catch (IOException e) {
-            logger.debug("I/O error while reading from stream: {}", e.getMessage());
+            logger.warn("I/O error while reading from stream: {}", e.getMessage());
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, e.getMessage());
-        } catch (RuntimeException e) {
-            logger.warn("Runtime exception in reader thread", e);
-            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, e.getMessage());
-        } finally {
-            logger.debug("Message reader thread exiting");
         }
+        // TODO: Catch RuntimeException here, or make sure monitoring job checks for thread exception state
+        logger.debug("Message reader thread exiting");
+        scheduleConnectRetry(1); // TODO: Remove and fix so that monitoring job schedules restart
     }
 
     /**
@@ -212,22 +226,26 @@ public abstract class ADBridgeHandler extends BaseBridgeHandler {
      * @throws MessageParseException
      */
     private void parseKeypadMessage(String msg) throws MessageParseException {
-        KeypadMessage kpMsg;
+        KeypadMessage kpm;
 
         // Parse the message
         try {
-            kpMsg = new KeypadMessage(msg);
+            kpm = new KeypadMessage(msg);
         } catch (IllegalArgumentException e) {
             throw new MessageParseException(e.getMessage());
         }
 
-        if (kpMsg.panelClear()) {
+        if (kpm.panelClear()) {
             // the panel is clear, so we can assume that all contacts that we
             // have not heard from are open
             notifyChildHandlersPanelReady();
         }
 
-        notifyChildHandlers(kpMsg);
+        // Notify appropriate KeypadHandlers
+        Collection<KeypadHandler> handlers = findKeypadHandlers(kpm.getIntAddressMask());
+        for (KeypadHandler handler : handlers) {
+            handler.handleUpdate(kpm);
+        }
     }
 
     /**
@@ -239,19 +257,21 @@ public abstract class ADBridgeHandler extends BaseBridgeHandler {
      */
     private void parseRelayOrExpanderMessage(ADMsgType mt, String msg) throws MessageParseException {
         // mt is unused at the moment
-        EXPMessage expMsg;
+        EXPMessage expm;
 
         try {
-            expMsg = new EXPMessage(msg);
+            expm = new EXPMessage(msg);
         } catch (IllegalArgumentException e) {
             throw new MessageParseException(e.getMessage());
         }
 
-        notifyChildHandlers(expMsg);
+        ZoneHandler handler = findZoneHandler(expm.address, expm.channel);
+        if (handler != null) {
+            handler.handleUpdate(expm.data);
+        }
 
-        AlarmDecoderDiscoveryService ds = discoveryService;
-        if (discovery && ds != null) {
-            ds.processZone(expMsg.address, expMsg.channel);
+        if (discovery && discoveryService != null) {
+            discoveryService.processZone(expm.address, expm.channel);
         }
     }
 
@@ -262,19 +282,21 @@ public abstract class ADBridgeHandler extends BaseBridgeHandler {
      * @throws MessageParseException
      */
     private void parseRFMessage(String msg) throws MessageParseException {
-        RFXMessage rfxMsg;
+        RFXMessage rfxm;
 
         try {
-            rfxMsg = new RFXMessage(msg);
+            rfxm = new RFXMessage(msg);
         } catch (IllegalArgumentException e) {
             throw new MessageParseException(e.getMessage());
         }
 
-        notifyChildHandlers(rfxMsg);
+        RFZoneHandler handler = findRFZoneHandler(rfxm.serial);
+        if (handler != null) {
+            handler.handleUpdate(rfxm.data);
+        }
 
-        AlarmDecoderDiscoveryService ds = discoveryService;
-        if (discovery && ds != null) {
-            ds.processRFZone(rfxMsg.serial);
+        if (discovery && discoveryService != null) {
+            discoveryService.processRFZone(rfxm.serial);
         }
     }
 
@@ -285,16 +307,20 @@ public abstract class ADBridgeHandler extends BaseBridgeHandler {
      * @throws MessageParseException
      */
     private void parseLRRMessage(String msg) throws MessageParseException {
-        LRRMessage lrrMsg;
+        LRRMessage lrrm;
 
         // Parse the message
         try {
-            lrrMsg = new LRRMessage(msg);
+            lrrm = new LRRMessage(msg);
         } catch (IllegalArgumentException e) {
             throw new MessageParseException(e.getMessage());
         }
 
-        notifyChildHandlers(lrrMsg);
+        // Notify appropriate LRRHandlers
+        Collection<LRRHandler> handlers = findLRRHandlers(lrrm.partition);
+        for (LRRHandler handler : handlers) {
+            handler.handleUpdate(lrrm);
+        }
     }
 
     /**
@@ -304,47 +330,27 @@ public abstract class ADBridgeHandler extends BaseBridgeHandler {
      * @throws MessageParseException
      */
     private void parseVersionMessage(String msg) throws MessageParseException {
-        VersionMessage verMsg;
+        VersionMessage verm;
 
         try {
-            verMsg = new VersionMessage(msg);
+            verm = new VersionMessage(msg);
         } catch (IllegalArgumentException e) {
             throw new MessageParseException(e.getMessage());
         }
 
-        logger.trace("Processing version message sn:{} ver:{} cap:{}", verMsg.serial, verMsg.version,
-                verMsg.capabilities);
+        logger.trace("Processing version message sn:{} ver:{} cap:{}", verm.serial, verm.version, verm.capabilities);
         Map<String, String> properties = editProperties();
-        properties.put(PROPERTY_SERIALNUM, verMsg.serial);
-        properties.put(PROPERTY_VERSION, verMsg.version);
-        properties.put(PROPERTY_CAPABILITIES, verMsg.capabilities);
+        properties.put(PROPERTY_SERIALNUM, verm.serial);
+        properties.put(PROPERTY_VERSION, verm.version);
+        properties.put(PROPERTY_CAPABILITIES, verm.capabilities);
         updateProperties(properties);
     }
 
     /**
-     * Notify appropriate child thing handlers of an AD message by calling their handleUpdate() methods.
-     *
-     * @param msg message to forward to child handler(s)
-     */
-    private void notifyChildHandlers(ADMessage msg) {
-        for (Thing thing : getThing().getThings()) {
-            ADThingHandler handler = (ADThingHandler) thing.getHandler();
-            //@formatter:off
-            if (handler != null && ((handler instanceof ZoneHandler && msg instanceof EXPMessage) ||
-                                    (handler instanceof RFZoneHandler && msg instanceof RFXMessage) ||
-                                    (handler instanceof KeypadHandler && msg instanceof KeypadMessage) ||
-                                    (handler instanceof LRRHandler && msg instanceof LRRMessage))) {
-                handler.handleUpdate(msg);
-            }
-            //@formatter:on
-        }
-    }
-
-    /**
-     * Notify child thing handlers that the alarm panel is in the ready state. Since there is no way to poll, all
-     * contact channels are initialized into the UNDEF state. This method is called when there is reason to assume that
-     * there are no faulted zones, because the alarm panel is in state READY. Zone handlers that have not yet received
-     * updates can then set their contact states to CLOSED. Only executes the first time panel is ready after bridge
+     * Notify all child thing handlers that the alarm panel is in the ready state. Since there is no way to poll, all
+     * channels are initialized into the UNDEF state. This method is called when there is reason to assume that there
+     * are no faulted zones, because the alarm panel is in state READY. Zone handlers that have not yet received updates
+     * can then set their contact states to CLOSED. Only executes the first time panel is ready after bridge
      * connect/reconnect.
      */
     private void notifyChildHandlersPanelReady() {
@@ -354,12 +360,80 @@ public abstract class ADBridgeHandler extends BaseBridgeHandler {
 
             // Notify child zone handlers by calling notifyPanelReady() for each
             for (Thing thing : getThing().getThings()) {
-                ADThingHandler handler = (ADThingHandler) thing.getHandler();
-                if (handler != null) {
-                    handler.notifyPanelReady();
+                if (thing.getHandler() instanceof ZoneHandler || thing.getHandler() instanceof RFZoneHandler) {
+                    ADThingHandler handler = (ADThingHandler) thing.getHandler();
+                    if (handler != null) {
+                        handler.notifyPanelReady();
+                    }
                 }
             }
         }
+    }
+
+    /**
+     * Return the ZoneHandler for the given address and channel, or null if no handler exists and is initialized.
+     */
+    private @Nullable ZoneHandler findZoneHandler(int address, int channel) {
+        for (Thing thing : getThing().getThings()) {
+            if (thing.getHandler() instanceof ZoneHandler) {
+                ZoneHandler handler = (ZoneHandler) thing.getHandler();
+                if (handler != null && handler.responsibleFor(address, channel)) {
+                    return handler;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Return the RFZoneHandler for the given serial number, or null if no handler exists and is initialized.
+     */
+    private @Nullable RFZoneHandler findRFZoneHandler(int serial) {
+        for (Thing thing : getThing().getThings()) {
+            if (thing.getHandler() instanceof RFZoneHandler) {
+                RFZoneHandler handler = (RFZoneHandler) thing.getHandler();
+                if (handler != null && handler.responsibleFor(serial)) {
+                    return handler;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Return a collection of the KeypadHandler(s) matching the given address mask. Empty if no matching handlers exists
+     * and are initialized.
+     */
+    private Collection<KeypadHandler> findKeypadHandlers(int mask) {
+        Collection<KeypadHandler> result = new ArrayList<>();
+
+        for (Thing thing : getThing().getThings()) {
+            if (thing.getHandler() instanceof KeypadHandler) {
+                KeypadHandler handler = (KeypadHandler) thing.getHandler();
+                if (handler != null && handler.responsibleFor(mask)) {
+                    result.add(handler);
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Return a collection of the LRRHandler(s) matching the given partition. Empty if no matching handlers exists
+     * and are initialized.
+     */
+    private Collection<LRRHandler> findLRRHandlers(int partition) {
+        Collection<LRRHandler> result = new ArrayList<>();
+
+        for (Thing thing : getThing().getThings()) {
+            if (thing.getHandler() instanceof LRRHandler) {
+                LRRHandler handler = (LRRHandler) thing.getHandler();
+                if (handler != null && handler.responsibleFor(partition)) {
+                    result.add(handler);
+                }
+            }
+        }
+        return result;
     }
 
     /**

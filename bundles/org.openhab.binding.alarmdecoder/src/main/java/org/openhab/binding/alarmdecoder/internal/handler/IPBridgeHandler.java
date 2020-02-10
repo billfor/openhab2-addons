@@ -19,8 +19,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.Date;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
@@ -44,8 +42,12 @@ public class IPBridgeHandler extends ADBridgeHandler {
 
     private final Logger logger = LoggerFactory.getLogger(IPBridgeHandler.class);
 
-    private IPBridgeConfig config = new IPBridgeConfig();
+    private @NonNullByDefault({}) IPBridgeConfig config;
 
+    /** hostname for the alarmdecoder process */
+    private @Nullable String tcpHostName = null;
+    /** port for the alarmdecoder process */
+    private int tcpPort = -1;
     private @Nullable Socket socket = null;
 
     public IPBridgeHandler(Bridge bridge) {
@@ -58,115 +60,108 @@ public class IPBridgeHandler extends ADBridgeHandler {
         config = getConfigAs(IPBridgeConfig.class);
         discovery = config.discovery;
 
-        if (config.hostname == null) {
-            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "hostname not configured");
+        if (config.hostname == null || config.tcpPort == null) {
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR,
+                    "ipAddress/tcpPort parameters not supplied");
             return;
         }
-        if (config.tcpPort <= 0 || config.tcpPort > 65535) {
-            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "invalid port number configured");
-            return;
-        }
+        tcpHostName = config.hostname;
+        tcpPort = config.tcpPort;
+        sendCommands = config.sendCommands;
 
         // set the thing status to UNKNOWN temporarily and let the background connect task decide the real status.
+        // we set this up-front to reliably check status updates in unit tests.
         updateStatus(ThingStatus.UNKNOWN);
 
         scheduler.submit(this::connect); // start the async connect task
+
+        logger.trace("Finished initializing IP bridge handler");
     }
 
     @Override
     protected synchronized void connect() {
-        disconnect(); // make sure we are disconnected
-        writeException = false;
-        try {
-            Socket socket = new Socket(config.hostname, config.tcpPort);
-            this.socket = socket;
-            reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), AD_CHARSET));
-            writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), AD_CHARSET));
-            logger.debug("connected to {}:{}", config.hostname, config.tcpPort);
-            panelReadyReceived = false;
-            startMsgReader();
-            updateStatus(ThingStatus.ONLINE);
+        boolean connectionSuccess = false;
 
-            // Start connection check job
-            logger.debug("Scheduling connection check job with interval {} minutes.", config.reconnect);
-            lastReceivedTime = new Date();
-            connectionCheckJob = scheduler.scheduleWithFixedDelay(this::connectionCheck, config.reconnect,
-                    config.reconnect, TimeUnit.MINUTES);
+        try {
+            disconnect(); // make sure we have disconnected
+            if (tcpHostName != null && tcpPort > 0 && tcpPort < 65536) {
+                socket = new Socket(tcpHostName, tcpPort);
+                reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+                logger.debug("connected to {}:{}", tcpHostName, tcpPort);
+                panelReadyReceived = false;
+                startMsgReader();
+                updateStatus(ThingStatus.ONLINE);
+                connectionSuccess = true;
+            } else {
+                updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR,
+                        "invalid ipAddress/tcpPort configured");
+            }
         } catch (UnknownHostException e) {
+            logger.debug("unknown hostname: {}", tcpHostName);
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "unknown host");
             disconnect();
         } catch (IOException e) {
+            logger.debug("cannot open connection to {}:{} error: {}", tcpHostName, tcpPort, e.getMessage());
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, e.getMessage());
             disconnect();
             scheduleConnectRetry(config.reconnect); // Possibly a retryable error. Try again later.
         }
+
+        // Start connection check job
+        if (connectionSuccess) {
+            connectionCheckJob = scheduler.scheduleWithFixedDelay(this::connectionCheck, config.heartbeat,
+                    config.heartbeat, TimeUnit.MINUTES);
+        }
     }
 
     protected synchronized void connectionCheck() {
-        logger.trace("Connection check job running");
-
-        Thread mrThread = msgReaderThread;
-        if (mrThread != null && !mrThread.isAlive()) {
-            logger.debug("Reader thread has exited abnormally. Restarting.");
-            scheduler.submit(this::connect);
-        } else if (writeException) {
-            logger.debug("Write exception encountered. Resetting connection.");
-            scheduler.submit(this::connect);
-        } else {
-            Date now = new Date();
-            Date last = lastReceivedTime;
-            if (last != null && config.timeout > 0
-                    && ((last.getTime() + (config.timeout * 60 * 1000)) < now.getTime())) {
-                logger.warn("Last valid message received at {}. Resetting connection.", last);
-                scheduler.submit(this::connect);
-            }
-        }
+        logger.trace("Connection check job started");
+        // TODO: Implement connection check
+        // Move to superclass?
+        // connectionCheckReconnectJob = scheduler.schedule(command, delay, unit);
     }
 
     @Override
     protected synchronized void disconnect() {
-        logger.trace("Disconnecting");
         // stop scheduled connection check and retry jobs
-        ScheduledFuture<?> crJob = connectRetryJob;
-        if (crJob != null) {
+        if (connectRetryJob != null) {
             // use cancel(false) so we don't kill ourselves when connect retry job calls disconnect()
-            crJob.cancel(false);
+            connectRetryJob.cancel(false);
             connectRetryJob = null;
         }
-        ScheduledFuture<?> ccJob = connectionCheckJob;
-        if (ccJob != null) {
-            // use cancel(false) so we don't kill ourselves when reconnect job calls disconnect()
-            ccJob.cancel(false);
+        if (connectionCheckJob != null) {
+            connectionCheckJob.cancel(true);
             connectionCheckJob = null;
         }
-
-        // Must close the socket first so the message reader thread will exit properly.
-        // The BufferedReader.readLine() call used in readerThread() is not interruptable.
-        Socket s = socket;
-        if (s != null) {
-            try {
-                s.close();
-            } catch (IOException e) {
-                logger.debug("error closing socket: {}", e.getMessage());
-            }
+        if (connectionCheckReconnectJob != null) {
+            // use cancel(false) so we don't kill ourselves when reconnect job calls disconnect()
+            connectionCheckReconnectJob.cancel(false);
+            connectionCheckReconnectJob = null;
         }
-        socket = null;
 
         stopMsgReader();
 
         try {
-            BufferedWriter bw = writer;
-            if (bw != null) {
-                bw.close();
+            if (writer != null) {
+                writer.close();
             }
-            BufferedReader br = reader;
-            if (br != null) {
-                br.close();
+            if (reader != null) {
+                reader.close();
             }
         } catch (IOException e) {
             logger.debug("error closing reader/writer: {}", e.getMessage());
         }
         writer = null;
         reader = null;
+
+        if (socket != null) {
+            try {
+                socket.close();
+            } catch (IOException e) {
+                logger.debug("error closing socket: {}", e.getMessage());
+            }
+        }
+        socket = null;
     }
 }

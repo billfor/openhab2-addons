@@ -12,14 +12,13 @@
  */
 package org.openhab.binding.alarmdecoder.internal.config;
 
-import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.openhab.binding.alarmdecoder.internal.handler.LRRHandler;
 
 /**
- * The {@link LRRConfig} class contains fields mapping thing configuration parameters for LRRHandler.
+ * The {@link LRRConfig} class contains fields mapping thing configuration parameters for {@link LRRHandler}.
  *
  * @author Bob Adair - Initial contribution
  */
-@NonNullByDefault
 public class LRRConfig {
-    public int partition = 0;
+    public Integer partition;
 }

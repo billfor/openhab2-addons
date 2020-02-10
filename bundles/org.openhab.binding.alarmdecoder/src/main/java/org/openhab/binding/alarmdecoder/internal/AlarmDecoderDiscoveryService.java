@@ -25,7 +25,6 @@ import org.eclipse.smarthome.config.discovery.DiscoveryResult;
 import org.eclipse.smarthome.config.discovery.DiscoveryResultBuilder;
 import org.eclipse.smarthome.core.thing.ThingUID;
 import org.openhab.binding.alarmdecoder.internal.handler.ADBridgeHandler;
-import org.openhab.binding.alarmdecoder.internal.handler.ZoneHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,8 +40,10 @@ public class AlarmDecoderDiscoveryService extends AbstractDiscoveryService {
     private final Logger logger = LoggerFactory.getLogger(AlarmDecoderDiscoveryService.class);
 
     private ADBridgeHandler bridgeHandler;
+    private boolean discoveryEnabled = true; // TODO: remove
     private final Set<String> discoveredZoneSet = new HashSet<>();
     private final Set<Integer> discoveredRFZoneSet = new HashSet<>();
+    // private final Set<Integer> discoveredKeypadSet = new HashSet<>();
 
     public AlarmDecoderDiscoveryService(ADBridgeHandler bridgeHandler) throws IllegalArgumentException {
         super(DISCOVERABLE_DEVICE_TYPE_UIDS, 0, false);
@@ -55,7 +56,10 @@ public class AlarmDecoderDiscoveryService extends AbstractDiscoveryService {
     }
 
     public void processZone(int address, int channel) {
-        String token = ZoneHandler.zoneID(address, channel);
+        if (!discoveryEnabled) {
+            return;
+        }
+        String token = String.format("%d-%d", address, channel);
         if (!discoveredZoneSet.contains(token)) {
             notifyDiscoveryOfZone(address, channel, token);
             discoveredZoneSet.add(token);
@@ -63,7 +67,7 @@ public class AlarmDecoderDiscoveryService extends AbstractDiscoveryService {
     }
 
     public void processRFZone(int serial) {
-        if (!discoveredRFZoneSet.contains(serial)) {
+        if (discoveryEnabled && !discoveredRFZoneSet.contains(serial)) {
             notifyDiscoveryOfRFZone(serial);
             discoveredRFZoneSet.add(serial);
         }
@@ -76,10 +80,10 @@ public class AlarmDecoderDiscoveryService extends AbstractDiscoveryService {
         Map<String, Object> properties = new HashMap<>();
         properties.put(PROPERTY_ADDRESS, address);
         properties.put(PROPERTY_CHANNEL, channel);
-        properties.put(PROPERTY_ID, idString);
+        properties.put("id", idString); // TODO: fix id property
 
         DiscoveryResult result = DiscoveryResultBuilder.create(uid).withBridge(bridgeUID).withProperties(properties)
-                .withRepresentationProperty(PROPERTY_ID).build();
+                .withRepresentationProperty("id").build(); // TODO: fix id property
         thingDiscovered(result);
         logger.debug("Discovered Zone {}", uid);
     }

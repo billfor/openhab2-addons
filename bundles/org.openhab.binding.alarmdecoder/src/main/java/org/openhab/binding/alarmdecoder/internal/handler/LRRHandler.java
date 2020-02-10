@@ -17,13 +17,13 @@ import static org.openhab.binding.alarmdecoder.internal.AlarmDecoderBindingConst
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.smarthome.core.library.types.DecimalType;
 import org.eclipse.smarthome.core.library.types.StringType;
+import org.eclipse.smarthome.core.thing.Bridge;
 import org.eclipse.smarthome.core.thing.ChannelUID;
 import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingStatus;
 import org.eclipse.smarthome.core.thing.ThingStatusDetail;
 import org.eclipse.smarthome.core.types.Command;
 import org.openhab.binding.alarmdecoder.internal.config.LRRConfig;
-import org.openhab.binding.alarmdecoder.internal.protocol.ADMessage;
 import org.openhab.binding.alarmdecoder.internal.protocol.LRRMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,17 +39,31 @@ public class LRRHandler extends ADThingHandler {
 
     private final Logger logger = LoggerFactory.getLogger(LRRHandler.class);
 
-    private LRRConfig config = new LRRConfig();
+    private @NonNullByDefault({}) LRRConfig config;
 
     public LRRHandler(Thing thing) {
         super(thing);
+    }
+
+    /**
+     * Returns true if this handler is responsible for the supplied partition.
+     * This is true is this handler's partition is 0 (all), the supplied partition is 0 (all), or if this handler's
+     * partition matches the supplied partition.
+     */
+    public Boolean responsibleFor(final int partition) {
+        if (config.partition != null
+                && (config.partition.equals(partition) || config.partition.equals(0) || partition == 0)) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     @Override
     public void initialize() {
         config = getConfigAs(LRRConfig.class);
 
-        if (config.partition < 0) {
+        if (config.partition == null || config.partition < 0) {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR);
             return;
         }
@@ -61,8 +75,22 @@ public class LRRHandler extends ADThingHandler {
     }
 
     @Override
+    protected void initDeviceState() {
+        logger.trace("Initializing device state for RLL partition {}", config.partition);
+        Bridge bridge = getBridge();
+        if (bridge == null) {
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "No bridge configured");
+        } else if (bridge.getStatus() == ThingStatus.ONLINE) {
+            updateStatus(ThingStatus.ONLINE);
+            initChannelState();
+        } else {
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.BRIDGE_OFFLINE);
+        }
+    }
+
+    @Override
     public void initChannelState() {
-        // Do nothing
+        // TODO: Init channel states if necessary
     }
 
     @Override
@@ -75,19 +103,11 @@ public class LRRHandler extends ADThingHandler {
         // All channels are read-only, so ignore all commands.
     }
 
-    @Override
-    public void handleUpdate(ADMessage msg) {
-        if (!(msg instanceof LRRMessage)) {
-            return;
-        }
-        LRRMessage lrrMsg = (LRRMessage) msg;
-
-        if (config.partition == lrrMsg.partition || config.partition == 0 || lrrMsg.partition == 0) {
-            logger.trace("LRR handler for partition {} received update: {}", config.partition, msg);
-            updateState(CHANNEL_LRR_PARTITION, new DecimalType(lrrMsg.partition));
-            updateState(CHANNEL_LRR_EVENTDATA, new DecimalType(lrrMsg.eventData));
-            updateState(CHANNEL_LRR_CIDMESSAGE, new StringType(lrrMsg.cidMessage));
-            updateState(CHANNEL_LRR_REPORTCODE, new StringType(lrrMsg.reportCode));
-        }
+    public void handleUpdate(LRRMessage msg) {
+        logger.trace("LRR handler for partition {} received update: {}", config.partition, msg);
+        updateState(CHANNEL_LRR_PARTITION, new DecimalType(msg.partition));
+        updateState(CHANNEL_LRR_EVENTDATA, new DecimalType(msg.eventData));
+        updateState(CHANNEL_LRR_CIDMESSAGE, new StringType(msg.cidMessage));
+        updateState(CHANNEL_LRR_REPORTCODE, new StringType(msg.reportCode));
     }
 }

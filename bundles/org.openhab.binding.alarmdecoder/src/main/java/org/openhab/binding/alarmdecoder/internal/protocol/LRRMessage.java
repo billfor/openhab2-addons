@@ -26,7 +26,6 @@ import org.eclipse.jdt.annotation.NonNullByDefault;
 public class LRRMessage extends ADMessage {
 
     // Example: !LRR:012,1,CID_1441,ff
-    // or: !LRR:000,1,ARM_AWAY
 
     /** Event data contains user number or zone number for the event */
     public final String eventData;
@@ -50,19 +49,25 @@ public class LRRMessage extends ADMessage {
 
         List<String> parts = splitMsg(topLevel[1]);
 
-        // Apparently the 4th part of the LRR message may not be included depending on version
-        if (parts.size() < 3 || parts.size() > 4) {
+        // TODO: Docs say there should be 4 parts to LRR message, but old OH1 code looks for 3???
+        if (parts.size() != 4) {
             throw new IllegalArgumentException("Invalid number of parts in LRR message");
         }
 
         eventData = parts.get(0);
         cidMessage = parts.get(2);
-        reportCode = parts.size() == 4 ? parts.get(3) : "";
+        reportCode = parts.get(3);
 
         try {
-            partition = Integer.parseInt(parts.get(1));
+            int p = 0;
+            try {
+                p = Integer.parseInt(parts.get(1));
+            } catch (NumberFormatException e) {
+                p = Integer.parseInt(parts.get(1), 16);
+            }
+            partition = p;
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("LRR msg contains invalid number: " + e.getMessage(), e);
+            throw new IllegalArgumentException("LRR msg contains invalid number: " + e.getMessage());
         }
     }
 }

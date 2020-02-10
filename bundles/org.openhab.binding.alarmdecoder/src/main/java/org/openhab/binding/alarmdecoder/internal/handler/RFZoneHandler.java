@@ -17,6 +17,7 @@ import static org.openhab.binding.alarmdecoder.internal.AlarmDecoderBindingConst
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.smarthome.core.library.types.OnOffType;
 import org.eclipse.smarthome.core.library.types.OpenClosedType;
+import org.eclipse.smarthome.core.thing.Bridge;
 import org.eclipse.smarthome.core.thing.ChannelUID;
 import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingStatus;
@@ -24,7 +25,6 @@ import org.eclipse.smarthome.core.thing.ThingStatusDetail;
 import org.eclipse.smarthome.core.types.Command;
 import org.eclipse.smarthome.core.types.UnDefType;
 import org.openhab.binding.alarmdecoder.internal.config.RFZoneConfig;
-import org.openhab.binding.alarmdecoder.internal.protocol.ADMessage;
 import org.openhab.binding.alarmdecoder.internal.protocol.RFXMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,18 +40,29 @@ public class RFZoneHandler extends ADThingHandler {
 
     private final Logger logger = LoggerFactory.getLogger(RFZoneHandler.class);
 
-    private RFZoneConfig config = new RFZoneConfig();
+    private @NonNullByDefault({}) RFZoneConfig config;
 
     public RFZoneHandler(Thing thing) {
         super(thing);
+    }
+
+    /**
+     * Returns true if this handler is responsible for the zone with the supplied address and channel.
+     */
+    public Boolean responsibleFor(final int serial) {
+        if (config.serial != null && config.serial.equals(serial)) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     @Override
     public void initialize() {
         config = getConfigAs(RFZoneConfig.class);
 
-        if (config.serial < 0) {
-            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "Invalid serial setting");
+        if (config.serial == null || config.serial < 0) {
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR);
             return;
         }
         logger.debug("RF Zone handler initializing for serial {}", config.serial);
@@ -59,6 +70,21 @@ public class RFZoneHandler extends ADThingHandler {
         initDeviceState();
 
         logger.trace("RF Zone handler finished initializing");
+    }
+
+    @Override
+    protected void initDeviceState() {
+        logger.trace("Initializing device state for RF Zone {}", config.serial);
+        Bridge bridge = getBridge();
+        if (bridge == null) {
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "No bridge configured");
+        } else if (bridge.getStatus() == ThingStatus.ONLINE) {
+            initChannelState();
+            firstUpdateReceived = false;
+            updateStatus(ThingStatus.ONLINE);
+        } else {
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.BRIDGE_OFFLINE);
+        }
     }
 
     /**
@@ -74,13 +100,13 @@ public class RFZoneHandler extends ADThingHandler {
         updateState(CHANNEL_RF_LOOP2, state);
         updateState(CHANNEL_RF_LOOP3, state);
         updateState(CHANNEL_RF_LOOP4, state);
-        firstUpdateReceived.set(false);
     }
 
     @Override
     public void notifyPanelReady() {
         logger.trace("RF Zone handler for {} received panel ready notification.", config.serial);
-        if (firstUpdateReceived.compareAndSet(false, true)) {
+        if (!firstUpdateReceived) {
+            firstUpdateReceived = true;
             updateState(CHANNEL_RF_LOOP1, OpenClosedType.CLOSED);
             updateState(CHANNEL_RF_LOOP2, OpenClosedType.CLOSED);
             updateState(CHANNEL_RF_LOOP3, OpenClosedType.CLOSED);
@@ -90,32 +116,39 @@ public class RFZoneHandler extends ADThingHandler {
 
     @Override
     public void handleCommand(ChannelUID channelUID, Command command) {
-        // Does not accept any commands
+        // Does not yet accept any commands
     }
 
-    @Override
-    public void handleUpdate(ADMessage msg) {
-        if (!(msg instanceof RFXMessage)) {
-            return;
-        }
-        RFXMessage rfxMsg = (RFXMessage) msg;
+    public void handleUpdate(int data) {
+        logger.trace("RF Zone handler for serial {} received update: {}", config.serial, data);
+        firstUpdateReceived = true;
 
-        if (config.serial == rfxMsg.serial) {
-            logger.trace("RF Zone handler for serial {} received update: {}", config.serial, rfxMsg.data);
-            firstUpdateReceived.set(true);
+        updateState(CHANNEL_RF_LOWBAT, (data & RFXMessage.BIT_LOWBAT) == 0 ? OnOffType.OFF : OnOffType.ON);
+        updateState(CHANNEL_RF_SUPERVISION, (data & RFXMessage.BIT_SUPER) == 0 ? OnOffType.OFF : OnOffType.ON);
 
-            updateState(CHANNEL_RF_LOWBAT, (rfxMsg.data & RFXMessage.BIT_LOWBAT) == 0 ? OnOffType.OFF : OnOffType.ON);
-            updateState(CHANNEL_RF_SUPERVISION,
-                    (rfxMsg.data & RFXMessage.BIT_SUPER) == 0 ? OnOffType.OFF : OnOffType.ON);
+        // TODO: confirm these don't have OPEN and CLOSED reversed
+        updateState(CHANNEL_RF_LOOP1, (data & RFXMessage.BIT_LOOP1) == 0 ? OpenClosedType.CLOSED : OpenClosedType.OPEN);
+        updateState(CHANNEL_RF_LOOP2, (data & RFXMessage.BIT_LOOP2) == 0 ? OpenClosedType.CLOSED : OpenClosedType.OPEN);
+        updateState(CHANNEL_RF_LOOP3, (data & RFXMessage.BIT_LOOP3) == 0 ? OpenClosedType.CLOSED : OpenClosedType.OPEN);
+        updateState(CHANNEL_RF_LOOP4, (data & RFXMessage.BIT_LOOP4) == 0 ? OpenClosedType.CLOSED : OpenClosedType.OPEN);
 
-            updateState(CHANNEL_RF_LOOP1,
-                    (rfxMsg.data & RFXMessage.BIT_LOOP1) == 0 ? OpenClosedType.CLOSED : OpenClosedType.OPEN);
-            updateState(CHANNEL_RF_LOOP2,
-                    (rfxMsg.data & RFXMessage.BIT_LOOP2) == 0 ? OpenClosedType.CLOSED : OpenClosedType.OPEN);
-            updateState(CHANNEL_RF_LOOP3,
-                    (rfxMsg.data & RFXMessage.BIT_LOOP3) == 0 ? OpenClosedType.CLOSED : OpenClosedType.OPEN);
-            updateState(CHANNEL_RF_LOOP4,
-                    (rfxMsg.data & RFXMessage.BIT_LOOP4) == 0 ? OpenClosedType.CLOSED : OpenClosedType.OPEN);
-        }
+        // TODO: Use updateState() or postCommand() ?
+        // postCommand(CHANNEL_LOOP4, state);
+
+        // // From OH1 handler:
+        // ArrayList<AlarmDecoderBindingConfig> bcl = getItems(ADMsgType.RFX, parts[0], null);
+        // for (AlarmDecoderBindingConfig c : bcl) {
+        // if (c.hasFeature("data")) {
+        // int bit = c.getIntParameter("bit", 0, 7, -1);
+        // // apply bitmask if requested, else publish raw number
+        // int v = (bit == -1) ? numeric : ((numeric >> bit) & 0x00000001);
+        // updateItem(c, new DecimalType(v));
+        // } else if (c.hasFeature("contact")) {
+        // // if no loop indicator bitmask is set, default to 0x80
+        // int bit = c.getIntParameter("bitmask", 0, 255, 0x80);
+        // int v = numeric & bit;
+        // updateItem(c, v == 0 ? OpenClosedType.CLOSED : OpenClosedType.OPEN);
+        // }
+        // }
     }
 }

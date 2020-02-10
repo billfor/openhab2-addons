@@ -12,19 +12,16 @@
  */
 package org.openhab.binding.alarmdecoder.internal.config;
 
-import org.eclipse.jdt.annotation.NonNullByDefault;
-import org.eclipse.jdt.annotation.Nullable;
-
 /**
- * The {@link IPBridgeConfig} class contains fields mapping thing configuration parameters for IPBridgeHandler.
+ * The {@link IPBridgeConfig} class contains fields mapping thing configuration parameters.
  *
  * @author Bob Adair - Initial contribution
  */
-@NonNullByDefault
 public class IPBridgeConfig {
-    public @Nullable String hostname;
-    public int tcpPort = 10000;
+    public String hostname;
+    public Integer tcpPort;
+    public boolean sendCommands = false;
     public boolean discovery = false;
-    public int reconnect = 2;
-    public int timeout = 5;
+    public int reconnect = 5;
+    public int heartbeat = 5;
 }

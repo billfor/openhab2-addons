@@ -12,15 +12,14 @@
  */
 package org.openhab.binding.alarmdecoder.internal.config;
 
-import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.openhab.binding.alarmdecoder.internal.handler.ZoneHandler;
 
 /**
- * The {@link ZoneConfig} class contains fields mapping thing configuration parameters for ZoneHandler.
+ * The {@link ZoneConfig} class contains fields mapping thing configuration parameters for {@link ZoneHandler}.
  *
  * @author Bob Adair - Initial contribution
  */
-@NonNullByDefault
 public class ZoneConfig {
-    public int address = -1;
-    public int channel = -1;
+    public Integer address;
+    public Integer channel;
 }

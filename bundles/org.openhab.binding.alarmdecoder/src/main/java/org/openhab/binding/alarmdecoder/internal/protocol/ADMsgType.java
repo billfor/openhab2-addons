@@ -14,16 +14,14 @@ package org.openhab.binding.alarmdecoder.internal.protocol;
 
 import java.util.HashMap;
 
-import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 
 /**
  * The various message types that come from the ad2usb/ad2pi interface
  *
- * @author Bernd Pfrommer - Initial contribution (OH1)
- * @author Bob Adair - Re-factored and removed methods unused in OH2 binding
+ * @author Bernd Pfrommer - Initial contribution
+ * @author Bob Adair - Removed methods unused in OH2 binding
  */
-@NonNullByDefault
 public enum ADMsgType {
     EXP, // zone expander message
     KPM, // keypad message
@@ -32,6 +30,69 @@ public enum ADMsgType {
     RFX, // wireless message
     VER, // version message
     INVALID; // invalid message
+
+    // TODO: Clean up
+
+    // /**
+    // *
+    // * @return true if it is a valid message type
+    // */
+    // public boolean isValid() {
+    // return (this != INVALID);
+    // }
+    //
+    // /**
+    // * Determine the message type from a 3-letter string
+    // *
+    // * @param s the 3-letter string
+    // * @return the message type (potentially INVALID)
+    // */
+    // public static ADMsgType fromString(String s) {
+    // ADMsgType mt = strToType.get(s);
+    // if (mt == null) {
+    // return strToType.get("INVALID");
+    // }
+    // return mt;
+    // }
+    //
+    // /**
+    // * Test if 3-letter string is a message type
+    // *
+    // * @param s string to test
+    // * @return true if string is a valid message type
+    // */
+    // public static boolean isValid(String s) {
+    // return (fromString(s).isValid());
+    // }
+    //
+    // /**
+    // * Test if string contains a valid message type
+    // *
+    // * @param s string to test
+    // * @return true if string contains a valid message type
+    // */
+    // public static boolean containsValidMsgType(String s) {
+    // for (String t : strToType.keySet()) {
+    // if (s.contains(t)) {
+    // return true;
+    // }
+    // }
+    // return (false);
+    // }
+
+    // /** hash map from string to type */
+    // private static HashMap<String, ADMsgType> strToType;
+    //
+    // static {
+    // strToType = new HashMap<String, ADMsgType>();
+    // strToType.put("KPM", KPM);
+    // strToType.put("RFX", RFX);
+    // strToType.put("EXP", EXP);
+    // strToType.put("REL", REL);
+    // strToType.put("LRR", LRR);
+    // strToType.put("VER", VER);
+    // strToType.put("INVALID", INVALID);
+    // }
 
     /** hash map from protocol message heading to type */
     private static HashMap<String, @Nullable ADMsgType> startToMsgType = new HashMap<>();
@@ -64,4 +125,5 @@ public enum ADMsgType {
         }
         return mt;
     }
+
 }

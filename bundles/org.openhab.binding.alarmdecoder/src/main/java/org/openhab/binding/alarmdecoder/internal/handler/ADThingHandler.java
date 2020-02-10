@@ -12,17 +12,12 @@
  */
 package org.openhab.binding.alarmdecoder.internal.handler;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import org.eclipse.jdt.annotation.NonNullByDefault;
-import org.eclipse.smarthome.core.thing.Bridge;
 import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingStatus;
 import org.eclipse.smarthome.core.thing.ThingStatusDetail;
 import org.eclipse.smarthome.core.thing.ThingStatusInfo;
 import org.eclipse.smarthome.core.thing.binding.BaseThingHandler;
-import org.openhab.binding.alarmdecoder.internal.protocol.ADCommand;
-import org.openhab.binding.alarmdecoder.internal.protocol.ADMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,33 +30,14 @@ import org.slf4j.LoggerFactory;
 public abstract class ADThingHandler extends BaseThingHandler {
 
     private final Logger logger = LoggerFactory.getLogger(ADThingHandler.class);
-    protected final AtomicBoolean firstUpdateReceived = new AtomicBoolean(false);
+    protected boolean firstUpdateReceived = false;
 
     public ADThingHandler(Thing thing) {
         super(thing);
     }
 
-    /**
-     * Initialize device state and set status for handler. Should be called at the end of initialize(). Also called by
-     * bridgeStatusChanged() when bridge status changes from OFFLINE to ONLINE. Calls initChannelState() to initialize
-     * channels if setting status to ONLINE.
-     */
-    protected void initDeviceState() {
-        logger.trace("Initializing device state");
-        Bridge bridge = getBridge();
-        if (bridge == null) {
-            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "No bridge configured");
-        } else if (bridge.getStatus() == ThingStatus.ONLINE) {
-            initChannelState();
-            updateStatus(ThingStatus.ONLINE);
-        } else {
-            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.BRIDGE_OFFLINE);
-        }
-    }
+    protected abstract void initDeviceState();
 
-    /**
-     * Initialize channel states if necessary
-     */
     public abstract void initChannelState();
 
     /**
@@ -70,40 +46,17 @@ public abstract class ADThingHandler extends BaseThingHandler {
      */
     public abstract void notifyPanelReady();
 
-    /**
-     * Notify handler of a message from the AD via the bridge
-     *
-     * @param msg The ADMessage to handle
-     */
-    public abstract void handleUpdate(ADMessage msg);
-
     @Override
     public void bridgeStatusChanged(ThingStatusInfo bridgeStatusInfo) {
-        ThingStatus bridgeStatus = bridgeStatusInfo.getStatus();
-        logger.debug("Bridge status changed to {} for AD handler", bridgeStatus);
+        logger.debug("Bridge status changed to {} for AD handler", bridgeStatusInfo.getStatus());
 
-        if (bridgeStatus == ThingStatus.ONLINE
+        if (bridgeStatusInfo.getStatus() == ThingStatus.ONLINE
                 && getThing().getStatusInfo().getStatusDetail() == ThingStatusDetail.BRIDGE_OFFLINE) {
             initDeviceState();
 
-        } else if (bridgeStatus == ThingStatus.OFFLINE) {
+        } else if (bridgeStatusInfo.getStatus() == ThingStatus.OFFLINE) {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.BRIDGE_OFFLINE);
-        }
-    }
-
-    /**
-     * Send a command via the bridge
-     *
-     * @param command command to send
-     */
-    protected void sendCommand(ADCommand command) {
-        Bridge bridge = getBridge();
-        ADBridgeHandler bridgeHandler = bridge == null ? null : (ADBridgeHandler) bridge.getHandler();
-
-        if (bridgeHandler == null) {
-            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.HANDLER_MISSING_ERROR, "No bridge associated");
-        } else {
-            bridgeHandler.sendADCommand(command);
+            // thingOfflineNotify();
         }
     }
 }

@@ -40,6 +40,8 @@ public class BridgeActions implements ThingActions {
         logger.trace("Alarm Decoder bridge actions service created");
     }
 
+    // TODO: activate() and deactivate() methods?
+
     @Override
     public void setThingHandler(@Nullable ThingHandler handler) {
         if (handler instanceof ADBridgeHandler) {
@@ -55,9 +57,8 @@ public class BridgeActions implements ThingActions {
     /**
      * Reboot thing action
      */
-    @RuleAction(label = "Reboot", description = "Reboot the Alarm Decoder device")
+    @RuleAction(label = "reboot", description = "Reboot the Alarm Decoder device")
     public void reboot() {
-        ADBridgeHandler bridge = this.bridge;
         if (bridge != null) {
             bridge.sendADCommand(ADCommand.reboot());
             logger.debug("Sending reboot command.");

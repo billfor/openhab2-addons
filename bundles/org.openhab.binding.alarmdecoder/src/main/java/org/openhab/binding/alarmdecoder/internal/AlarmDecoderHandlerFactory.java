@@ -31,19 +31,15 @@ import org.eclipse.smarthome.core.thing.ThingUID;
 import org.eclipse.smarthome.core.thing.binding.BaseThingHandlerFactory;
 import org.eclipse.smarthome.core.thing.binding.ThingHandler;
 import org.eclipse.smarthome.core.thing.binding.ThingHandlerFactory;
-import org.eclipse.smarthome.io.transport.serial.SerialPortManager;
 import org.openhab.binding.alarmdecoder.internal.handler.ADBridgeHandler;
 import org.openhab.binding.alarmdecoder.internal.handler.IPBridgeHandler;
 import org.openhab.binding.alarmdecoder.internal.handler.KeypadHandler;
 import org.openhab.binding.alarmdecoder.internal.handler.LRRHandler;
 import org.openhab.binding.alarmdecoder.internal.handler.RFZoneHandler;
 import org.openhab.binding.alarmdecoder.internal.handler.SerialBridgeHandler;
-import org.openhab.binding.alarmdecoder.internal.handler.VZoneHandler;
 import org.openhab.binding.alarmdecoder.internal.handler.ZoneHandler;
 import org.osgi.framework.ServiceRegistration;
-import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,17 +55,9 @@ public class AlarmDecoderHandlerFactory extends BaseThingHandlerFactory {
 
     private static final Set<ThingTypeUID> SUPPORTED_THING_TYPES_UIDS = Collections
             .unmodifiableSet(Stream.of(THING_TYPE_IPBRIDGE, THING_TYPE_SERIALBRIDGE, THING_TYPE_ZONE, THING_TYPE_RFZONE,
-                    THING_TYPE_VZONE, THING_TYPE_KEYPAD, THING_TYPE_LRR).collect(Collectors.toSet()));
+                    THING_TYPE_KEYPAD, THING_TYPE_LRR).collect(Collectors.toSet()));
 
     private final Logger logger = LoggerFactory.getLogger(AlarmDecoderHandlerFactory.class);
-
-    private final SerialPortManager serialPortManager;
-
-    @Activate
-    public AlarmDecoderHandlerFactory(final @Reference SerialPortManager serialPortManager) {
-        // Obtain the serial port manager service using an OSGi reference
-        this.serialPortManager = serialPortManager;
-    }
 
     @Override
     public boolean supportsThingType(ThingTypeUID thingTypeUID) {
@@ -88,15 +76,13 @@ public class AlarmDecoderHandlerFactory extends BaseThingHandlerFactory {
             registerDiscoveryService(bridgeHandler);
             return bridgeHandler;
         } else if (THING_TYPE_SERIALBRIDGE.equals(thingTypeUID)) {
-            SerialBridgeHandler bridgeHandler = new SerialBridgeHandler((Bridge) thing, serialPortManager);
+            SerialBridgeHandler bridgeHandler = new SerialBridgeHandler((Bridge) thing);
             registerDiscoveryService(bridgeHandler);
             return bridgeHandler;
         } else if (THING_TYPE_ZONE.equals(thingTypeUID)) {
             return new ZoneHandler(thing);
         } else if (THING_TYPE_RFZONE.equals(thingTypeUID)) {
             return new RFZoneHandler(thing);
-        } else if (THING_TYPE_VZONE.equals(thingTypeUID)) {
-            return new VZoneHandler(thing);
         } else if (THING_TYPE_KEYPAD.equals(thingTypeUID)) {
             return new KeypadHandler(thing);
         } else if (THING_TYPE_LRR.equals(thingTypeUID)) {
