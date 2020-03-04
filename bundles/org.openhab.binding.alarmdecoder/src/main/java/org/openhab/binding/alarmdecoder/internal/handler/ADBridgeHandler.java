@@ -129,6 +129,7 @@ public abstract class ADBridgeHandler extends BaseBridgeHandler {
      * @param command Command string to send including terminator
      */
     public void sendADCommand(ADCommand command) {
+        logger.debug("Sending AD command: {}", command);
         try {
             if (writer != null) {
                 writer.write(command.toString());

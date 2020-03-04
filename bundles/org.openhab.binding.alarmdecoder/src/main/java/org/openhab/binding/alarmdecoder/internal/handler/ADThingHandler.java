@@ -13,11 +13,13 @@
 package org.openhab.binding.alarmdecoder.internal.handler;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.smarthome.core.thing.Bridge;
 import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingStatus;
 import org.eclipse.smarthome.core.thing.ThingStatusDetail;
 import org.eclipse.smarthome.core.thing.ThingStatusInfo;
 import org.eclipse.smarthome.core.thing.binding.BaseThingHandler;
+import org.openhab.binding.alarmdecoder.internal.protocol.ADCommand;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,6 +59,22 @@ public abstract class ADThingHandler extends BaseThingHandler {
         } else if (bridgeStatusInfo.getStatus() == ThingStatus.OFFLINE) {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.BRIDGE_OFFLINE);
             // thingOfflineNotify();
+        }
+    }
+
+    /**
+     * Send a command via the bridge
+     * 
+     * @param command command to send
+     */
+    protected void sendCommand(ADCommand command) {
+        Bridge bridge = getBridge();
+        ADBridgeHandler bridgeHandler = bridge == null ? null : (ADBridgeHandler) bridge.getHandler();
+
+        if (bridgeHandler == null) {
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.HANDLER_MISSING_ERROR, "No bridge associated");
+        } else {
+            bridgeHandler.sendADCommand(command);
         }
     }
 }

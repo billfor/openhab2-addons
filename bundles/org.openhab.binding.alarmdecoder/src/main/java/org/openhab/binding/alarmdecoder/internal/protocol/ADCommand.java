@@ -33,20 +33,23 @@ public final class ADCommand {
     public static final String SPECIAL_KEY_7 = "\u0007\u0007\u0007";
     public static final String SPECIAL_KEY_8 = "\u0008\u0008\u0008";
 
-    public static final String KEYPAD_CHARACTERS = "0123456789*#<>";
+    // public static final String KEYPAD_COMMAND_CHARACTERS = "0123456789*#<>";
+    public static final String KEYPAD_COMMAND_REGEX = "^[0-9*#<>]+$";
 
-    private static final String COMMAND_REBOOT = "=\r";
+    private static final String TERM = "\r\n";
+
+    private static final String COMMAND_REBOOT = "=";
     private static final String COMMAND_CONFIG = "C";
     private static final String COMMAND_ZONE = "L";
-    private static final String COMMAND_ERROR = "E\r";
-    private static final String COMMAND_VERSION = "V\r";
+    private static final String COMMAND_ERROR = "E";
+    private static final String COMMAND_VERSION = "V";
     private static final String COMMAND_ADDRMSG = "K";
-    private static final String COMMAND_ACKCRC = "R\r";
+    private static final String COMMAND_ACKCRC = "R";
 
     public final String command;
 
     public ADCommand(String command) {
-        this.command = command;
+        this.command = command + TERM;
     }
 
     @Override
@@ -68,9 +71,9 @@ public final class ADCommand {
      */
     public static ADCommand config(@Nullable String configParam) {
         if (configParam == null) {
-            return new ADCommand(COMMAND_CONFIG + "\r");
+            return new ADCommand(COMMAND_CONFIG);
         } else {
-            return new ADCommand(COMMAND_CONFIG + configParam + "\r");
+            return new ADCommand(COMMAND_CONFIG + configParam);
         }
     }
 
@@ -86,7 +89,7 @@ public final class ADCommand {
         if (zone < 0 || zone > 99 || state < 0 || state > 1) {
             throw new IllegalArgumentException("Invalid parameter(s)");
         }
-        return new ADCommand(String.format("%s%02d%d\r", COMMAND_ZONE, zone, state));
+        return new ADCommand(String.format("%s%02d%d", COMMAND_ZONE, zone, state));
     }
 
     /**
@@ -120,7 +123,7 @@ public final class ADCommand {
         if (address < 0 || address > 99 || message.length() < 1) {
             throw new IllegalArgumentException("Invalid parameter(s)");
         }
-        return new ADCommand(String.format("%s%02d%s\r", COMMAND_ADDRMSG, address, message));
+        return new ADCommand(String.format("%s%02d%s", COMMAND_ADDRMSG, address, message));
     }
 
     /**

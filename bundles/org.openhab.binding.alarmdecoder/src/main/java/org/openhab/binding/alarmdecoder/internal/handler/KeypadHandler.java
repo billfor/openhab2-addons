@@ -14,6 +14,9 @@ package org.openhab.binding.alarmdecoder.internal.handler;
 
 import static org.openhab.binding.alarmdecoder.internal.AlarmDecoderBindingConstants.*;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.smarthome.core.library.types.DecimalType;
 import org.eclipse.smarthome.core.library.types.OnOffType;
@@ -25,6 +28,7 @@ import org.eclipse.smarthome.core.thing.ThingStatus;
 import org.eclipse.smarthome.core.thing.ThingStatusDetail;
 import org.eclipse.smarthome.core.types.Command;
 import org.openhab.binding.alarmdecoder.internal.config.KeypadConfig;
+import org.openhab.binding.alarmdecoder.internal.protocol.ADCommand;
 import org.openhab.binding.alarmdecoder.internal.protocol.KeypadMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +45,8 @@ public class KeypadHandler extends ADThingHandler {
     private final Logger logger = LoggerFactory.getLogger(KeypadHandler.class);
 
     private @NonNullByDefault({}) KeypadConfig config;
+    private boolean singleAddress;
+    private Pattern validCommandPattern = Pattern.compile(ADCommand.KEYPAD_COMMAND_REGEX);
 
     public KeypadHandler(Thing thing) {
         super(thing);
@@ -68,6 +74,7 @@ public class KeypadHandler extends ADThingHandler {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR);
             return;
         }
+        singleAddress = Integer.bitCount(config.addressMask) == 1;
         logger.debug("Keypad handler initializing for address mask {}", config.addressMask);
 
         initDeviceState();
@@ -101,7 +108,27 @@ public class KeypadHandler extends ADThingHandler {
 
     @Override
     public void handleCommand(ChannelUID channelUID, Command command) {
-        // Does not yet accept any commands
+        if (channelUID.getId().equals(CHANNEL_KP_COMMAND)) {
+            if (command instanceof StringType) {
+                String cmd = ((StringType) command).toString();
+                if (cmd.length() > 0) {
+                    // check that received command is valid
+                    Matcher matcher = validCommandPattern.matcher(cmd);
+                    if (!matcher.matches()) {
+                        logger.info("Invalid characters in command. Ignoring command: {}", cmd);
+                        return;
+                    }
+
+                    // TODO: Replace A-H in command string with special keys 1-8
+
+                    if (singleAddress) {
+                        sendCommand(ADCommand.addressedMessage(config.addressMask, cmd)); // send from keypad address
+                    } else {
+                        sendCommand(new ADCommand(cmd)); // send from AD address
+                    }
+                }
+            }
+        }
     }
 
     public void handleUpdate(KeypadMessage kpm) {

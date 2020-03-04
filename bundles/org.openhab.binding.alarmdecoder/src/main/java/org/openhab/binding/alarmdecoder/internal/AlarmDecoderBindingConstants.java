@@ -80,6 +80,7 @@ public class AlarmDecoderBindingConstants {
     public static final String CHANNEL_KP_FIRE = "fire";
     public static final String CHANNEL_KP_SYSFAULT = "sysfault";
     public static final String CHANNEL_KP_PERIMETER = "perimeter";
+    public static final String CHANNEL_KP_COMMAND = "command";
 
     // Channel IDs for LRRHandler
     public static final String CHANNEL_LRR_PARTITION = "partition";

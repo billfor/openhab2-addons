@@ -210,6 +210,9 @@
 			<channel id="perimeter" typeId="indicator-channel">
 				<label>Perimeter Only</label>
 			</channel>
+			<channel id="command" typeId="command-channel">
+				<label>Keypad Command</label>
+			</channel>
 		</channels>
 
 		<config-description>
@@ -293,4 +296,9 @@
 		<state readOnly="true"/>
 	</channel-type>
 
+	<!--  Command channel type -->
+	<channel-type id="command-channel" advanced="true">
+		<item-type>String</item-type>
+		<label>Command Channel</label>
+	</channel-type>
 </thing:thing-descriptions>
