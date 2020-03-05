@@ -21,11 +21,6 @@
 				<label>TCP Port</label>
 				<description>TCP port number for the Alarm Decoder connection</description>
 			</parameter>
-			<parameter name="sendCommands" type="boolean">
-				<label>Send Commands</label>
-				<description>Allow commands to be sent to the alarm system from openHAB. Enabling this means the alarm system will be only as secure as your openHAB system.</description>
-				<default>false</default>
-			</parameter>
 			<parameter name="discovery" type="boolean">
 				<label>Enable Discovery</label>
 				<description>Enable automatic discovery of zones and RF zones</description>
@@ -63,11 +58,6 @@
 			<parameter name="bitrate" type="integer">
 				<label>Bitrate</label>
 				<description>Speed of the serial connection</description>
-			</parameter>
-			<parameter name="sendCommands" type="boolean">
-				<label>Send Commands</label>
-				<description>Allow commands to be sent to the alarm system from openHAB. Enabling this means the alarm system will be only as secure as your openHAB system.</description>
-				<default>false</default>
 			</parameter>
 			<parameter name="discovery" type="boolean">
 				<label>Enable Discovery</label>
@@ -219,6 +209,11 @@
 			<parameter name="addressMask" type="text" required="true">
 				<label>Address Mask</label>
 				<description>Keypad address mask</description>
+			</parameter>
+			<parameter name="sendCommands" type="boolean">
+				<label>Send Commands</label>
+				<description>Allow keypad commands to be sent to the alarm system from openHAB. Enabling this means the alarm system will be only as secure as your openHAB system.</description>
+				<default>false</default>
 			</parameter>
 		</config-description>
 	</thing-type>

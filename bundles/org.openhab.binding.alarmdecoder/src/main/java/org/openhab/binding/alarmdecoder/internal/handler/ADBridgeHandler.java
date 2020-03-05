@@ -61,7 +61,6 @@ public abstract class ADBridgeHandler extends BaseBridgeHandler {
     protected @Nullable BufferedReader reader = null;
     protected @Nullable BufferedWriter writer = null;
     protected @Nullable Thread msgReaderThread = null;
-    protected boolean sendCommands = false;
     protected @Nullable AlarmDecoderDiscoveryService discoveryService;
     protected boolean discovery;
     protected boolean panelReadyReceived = false;
@@ -93,11 +92,6 @@ public abstract class ADBridgeHandler extends BaseBridgeHandler {
         // TODO
 
         // Moved from OH1 internalReceiveCommand(String itemName, Command command) method:
-
-        if (!sendCommands) {
-            logger.warn("sending commands is disabled. Enable it using the sendCommands option.");
-            return;
-        }
 
         // String param = "INVALID";
         // if (command instanceof OnOffType) {

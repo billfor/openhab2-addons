@@ -19,4 +19,5 @@ package org.openhab.binding.alarmdecoder.internal.config;
  */
 public class KeypadConfig {
     public Integer addressMask;
+    public boolean sendCommands = false;
 }

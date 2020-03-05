@@ -1,35 +1,31 @@
 # alarmdecoder Binding
 
-_Give some details about what this binding is meant for - a protocol, system, specific device._
+The [Alarm Decoder](http://www.alarmdecoder.com) from Nu Tech Software Solutions is a hardware adapter that interfaces with Ademco/Honeywell and DSC alarm panels.
+It acts essentially like a keypad, reading and writing messages on the serial bus that connects keypads with the main panel.
 
-_If possible, provide some resources like pictures, a YouTube video, etc. to give an impression of what can be done with this binding. You can place such resources into a `doc` folder next to this README.md._
+There are several versions of the adapter available: 
+
+* ad2pi (a board that plugs into a Raspberry Pi and so offers network-based TCP connectivity)
+* ad2serial (serial port access)
+* or ad2usb (emulated serial port via USB).
+
+This binding allows openHAB to access the status of contacts and motion detectors connected to supported alarm panels, and also to optionally send keypad commands.
 
 ## Supported Things
 
-_Please describe the different supported things / devices within this section._
-_Which different types are supported, which models were tested etc.?_
-_Note that it is planned to generate some part of this based on the XML files within ```src/main/resources/ESH-INF/thing``` of your binding._
+The binding supports the following thing types:
+
+* **ipbridge**
+* **serialbridge**
+* **keypad**
+* **zone**
+* **rfzone**
+* **lrr**
 
 ## Discovery
 
-_Describe the available auto-discovery features here. Mention for what it works and what needs to be kept in mind when using it._
-
-## Binding Configuration
-
-_If your binding requires or supports general configuration settings, please create a folder ```cfg``` and place the configuration file ```<bindingId>.cfg``` inside it. In this section, you should link to this file and provide some information about the options. The file could e.g. look like:_
-
-```
-# Configuration for the Philips Hue Binding
-#
-# Default secret key for the pairing of the Philips Hue Bridge.
-# It has to be between 10-40 (alphanumeric) characters
-# This may be changed by the user for security reasons.
-secret=openHABSecret
-```
-
-_Note that it is planned to generate some part of this based on the information that is available within ```src/main/resources/ESH-INF/binding``` of your binding._
-
-_If your binding does not offer any generic configurations, you can remove this section completely._
+Background discovery is currently supported for **zone** and **rfzone** things.
+If the bridge *discovery* parameter is set to *true*, the first time a status message is seen from each zone or RF zone a corresponding thing will appear in the inbox.
 
 ## Thing Configuration
 
@@ -39,13 +35,56 @@ _Note that it is planned to generate some part of this based on the XML files wi
 
 ## Channels
 
-_Here you should provide information about available channel types, what their meaning is and how they can be used._
+The alarmdecoder things expose the following channels:
 
-_Note that it is planned to generate some part of this based on the XML files within ```src/main/resources/ESH-INF/thing``` of your binding._
+**zone**
 
-| channel  | type   | description                  |
-|----------|--------|------------------------------|
-| control  | Switch | This is the control channel  |
+|  channel     | type    |RO/RW| description                  |
+|--------------|---------|-----|------------------------------|
+| contact      | Contact |RO   |Zone contact state            |
+
+**rfzone**
+
+|  channel     | type    |RO/RW| description                  |
+|--------------|---------|-----|------------------------------|
+| lowbat       | Switch  | RO  |Low battery                   |
+| supervision  | Switch  | RO  |Supervision required          |
+| loop1        | Contact | RO  |Loop 1 state                  |
+| loop2        | Contact | RO  |Loop 2 state                  |
+| loop3        | Contact | RO  |Loop 3 state                  |
+| loop4        | Contact | RO  |Loop 4 state                  |
+
+**keypad**
+
+|  channel     | type    |RO/RW| description                  |
+|--------------|---------|-----|------------------------------|
+| zone         | Number  | RO  |Zone number for status        |
+| text         | String  | RO  |Keypad message text           |
+| armedaway    | Switch  | RO  |Armed/Away Indicator          |
+| armedhome    | Switch  | RO  |Armed/Stay Indicator          |
+| backlight    | Switch  | RO  |Keypad backlight on           |
+| program      | Switch  | RO  |Programming mode              |
+| beeps        | Number  | RO  |Number of beeps for message   |
+| bypassed     | Switch  | RO  |Zone bypassed                 |
+| acpower      | Switch  | RO  |Panel on AC power             |
+| chime        | Switch  | RO  |Chime enabled                 |
+| alarmoccurred| Switch  | RO  |Alarm occurred in the past    |
+| alarm        | Switch  | RO  |Alarm is currently sounding   |
+| lowbat       | Switch  | RO  |Low battery warning           |
+| delayoff     | Switch  | RO  |Entry delay off               |
+| fire         | Switch  | RO  |Fire detected                 |
+| sysfault     | Switch  | RO  |System fault                  |
+| perimeter    | Switch  | RO  |Perimeter only                |
+| command      | String  | RW  |Keypad command                |
+
+**lrr**
+
+|  channel     | type    |RO/RW| description                  |
+|--------------|---------|-----|------------------------------|
+| partition    | Number  | RO  |Partition number (0=system)   |
+| eventdata    | Number  | RO  |CID event data (user or zone) |
+| cidmessage   | String  | RO  |SIA Contact ID Protocol msg.  |
+| reportcode   | String  | RO  |CID report code               |
 
 ## Full Example
 
@@ -53,4 +92,9 @@ _Provide a full usage example based on textual configuration files (*.things, *.
 
 ## Any custom content here!
 
-_Feel free to add additional sections for whatever you think should also be mentioned about your binding!_
+## Quirks
+
+The alarmdecoder device cannot query the panel for the state of individual zones.
+For this reason, the binding puts contacts into the "unknown" state (UNDEF), *until the panel goes into the READY state*.
+At that point, all contacts for which no messages have arrived are presumed to be in the CLOSED state.
+In other words: to get to a clean slate after an openHAB restart, close all doors/windows such that the panel is READY.

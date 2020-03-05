@@ -67,7 +67,6 @@ public class IPBridgeHandler extends ADBridgeHandler {
         }
         tcpHostName = config.hostname;
         tcpPort = config.tcpPort;
-        sendCommands = config.sendCommands;
 
         // set the thing status to UNKNOWN temporarily and let the background connect task decide the real status.
         // we set this up-front to reliably check status updates in unit tests.

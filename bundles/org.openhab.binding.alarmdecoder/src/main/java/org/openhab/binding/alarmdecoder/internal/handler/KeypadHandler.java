@@ -112,6 +112,12 @@ public class KeypadHandler extends ADThingHandler {
             if (command instanceof StringType) {
                 String cmd = ((StringType) command).toString();
                 if (cmd.length() > 0) {
+                    if (!config.sendCommands) {
+                        logger.info(
+                                "Sending keypad commands is disabled. Enable using the sendCommands keypad parameter.");
+                        return;
+                    }
+
                     // check that received command is valid
                     Matcher matcher = validCommandPattern.matcher(cmd);
                     if (!matcher.matches()) {

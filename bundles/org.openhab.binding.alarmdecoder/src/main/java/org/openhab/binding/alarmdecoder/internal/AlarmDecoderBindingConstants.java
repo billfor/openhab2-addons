@@ -50,10 +50,12 @@ public class AlarmDecoderBindingConstants {
     // Channel IDs for ZoneHandler
     public static final String PROPERTY_ADDRESS = "address";
     public static final String PROPERTY_CHANNEL = "channel";
+
     public static final String CHANNEL_CONTACT = "contact";
 
     // Channel IDs for RFZoneHandler
     public static final String PROPERTY_SERIAL = "serial";
+
     public static final String CHANNEL_RF_LOWBAT = "lowbat";
     public static final String CHANNEL_RF_SUPERVISION = "supervision";
     public static final String CHANNEL_RF_LOOP1 = "loop1";

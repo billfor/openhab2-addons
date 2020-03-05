@@ -66,7 +66,6 @@ public class SerialBridgeHandler extends ADBridgeHandler {
         logger.debug("Initializing serial bridge handler");
         config = getConfigAs(SerialBridgeConfig.class);
         discovery = config.discovery;
-        sendCommands = config.sendCommands;
 
         // updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "bridge configuration missing");
 

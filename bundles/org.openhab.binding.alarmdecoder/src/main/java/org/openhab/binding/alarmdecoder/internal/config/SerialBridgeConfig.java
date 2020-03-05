@@ -20,6 +20,5 @@ package org.openhab.binding.alarmdecoder.internal.config;
 public class SerialBridgeConfig {
     public String serialPort;
     public Integer bitrate;
-    public boolean sendCommands = false;
     public boolean discovery = false;
 }
