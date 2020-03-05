@@ -19,7 +19,7 @@ package org.openhab.binding.alarmdecoder.internal.config;
  */
 public class IPBridgeConfig {
     public String hostname;
-    public Integer tcpPort;
+    public int tcpPort = 10000;
     public boolean discovery = false;
     public int reconnect = 5;
     public int heartbeat = 5;

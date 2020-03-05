@@ -25,6 +25,7 @@ import org.eclipse.smarthome.config.discovery.DiscoveryResult;
 import org.eclipse.smarthome.config.discovery.DiscoveryResultBuilder;
 import org.eclipse.smarthome.core.thing.ThingUID;
 import org.openhab.binding.alarmdecoder.internal.handler.ADBridgeHandler;
+import org.openhab.binding.alarmdecoder.internal.handler.ZoneHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,7 +60,7 @@ public class AlarmDecoderDiscoveryService extends AbstractDiscoveryService {
         if (!discoveryEnabled) {
             return;
         }
-        String token = String.format("%d-%d", address, channel);
+        String token = ZoneHandler.zoneID(address, channel);
         if (!discoveredZoneSet.contains(token)) {
             notifyDiscoveryOfZone(address, channel, token);
             discoveredZoneSet.add(token);
@@ -80,10 +81,10 @@ public class AlarmDecoderDiscoveryService extends AbstractDiscoveryService {
         Map<String, Object> properties = new HashMap<>();
         properties.put(PROPERTY_ADDRESS, address);
         properties.put(PROPERTY_CHANNEL, channel);
-        properties.put("id", idString); // TODO: fix id property
+        properties.put(PROPERTY_ID, idString);
 
         DiscoveryResult result = DiscoveryResultBuilder.create(uid).withBridge(bridgeUID).withProperties(properties)
-                .withRepresentationProperty("id").build(); // TODO: fix id property
+                .withRepresentationProperty(PROPERTY_ID).build();
         thingDiscovered(result);
         logger.debug("Discovered Zone {}", uid);
     }

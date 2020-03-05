@@ -12,7 +12,7 @@
  */
 package org.openhab.binding.alarmdecoder.internal.handler;
 
-import static org.openhab.binding.alarmdecoder.internal.AlarmDecoderBindingConstants.CHANNEL_CONTACT;
+import static org.openhab.binding.alarmdecoder.internal.AlarmDecoderBindingConstants.*;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.smarthome.core.library.types.OpenClosedType;
@@ -39,6 +39,11 @@ public class ZoneHandler extends ADThingHandler {
     private final Logger logger = LoggerFactory.getLogger(ZoneHandler.class);
 
     private @NonNullByDefault({}) ZoneConfig config;
+
+    /** Construct zone id from address and channel */
+    public static final String zoneID(int address, int channel) {
+        return String.format("%d-%d", address, channel);
+    }
 
     public ZoneHandler(Thing thing) {
         super(thing);
@@ -67,8 +72,10 @@ public class ZoneHandler extends ADThingHandler {
         }
         logger.debug("Zone handler initializing for address {} channel {}", config.address, config.channel);
 
-        initDeviceState();
+        String id = zoneID(config.address, config.channel);
+        updateProperty(PROPERTY_ID, id); // set representation property used by discovery
 
+        initDeviceState();
         logger.trace("Zone handler finished initializing");
     }
 

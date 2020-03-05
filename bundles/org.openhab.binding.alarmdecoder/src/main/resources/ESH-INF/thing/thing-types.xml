@@ -17,9 +17,10 @@
 				<label>Host Name</label>
 				<description>The hostname of the Alarm Decoder device</description>
 			</parameter>
-			<parameter name="tcpPort" type="integer" required="true">
+			<parameter name="tcpPort" type="integer">
 				<label>TCP Port</label>
 				<description>TCP port number for the Alarm Decoder connection</description>
+				<default>10000</default>
 			</parameter>
 			<parameter name="discovery" type="boolean">
 				<label>Enable Discovery</label>

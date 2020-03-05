@@ -50,6 +50,7 @@ public class AlarmDecoderBindingConstants {
     // Channel IDs for ZoneHandler
     public static final String PROPERTY_ADDRESS = "address";
     public static final String PROPERTY_CHANNEL = "channel";
+    public static final String PROPERTY_ID = "id";
 
     public static final String CHANNEL_CONTACT = "contact";
 

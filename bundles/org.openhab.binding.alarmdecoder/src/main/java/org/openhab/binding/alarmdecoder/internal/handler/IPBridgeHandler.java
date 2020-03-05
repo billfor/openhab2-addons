@@ -47,7 +47,7 @@ public class IPBridgeHandler extends ADBridgeHandler {
     /** hostname for the alarmdecoder process */
     private @Nullable String tcpHostName = null;
     /** port for the alarmdecoder process */
-    private int tcpPort = -1;
+    private int tcpPort;
     private @Nullable Socket socket = null;
 
     public IPBridgeHandler(Bridge bridge) {
@@ -60,9 +60,8 @@ public class IPBridgeHandler extends ADBridgeHandler {
         config = getConfigAs(IPBridgeConfig.class);
         discovery = config.discovery;
 
-        if (config.hostname == null || config.tcpPort == null) {
-            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR,
-                    "ipAddress/tcpPort parameters not supplied");
+        if (config.hostname == null) {
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "hostname parameter not supplied");
             return;
         }
         tcpHostName = config.hostname;
@@ -94,7 +93,7 @@ public class IPBridgeHandler extends ADBridgeHandler {
                 connectionSuccess = true;
             } else {
                 updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR,
-                        "invalid ipAddress/tcpPort configured");
+                        "invalid hostname/tcpPort configured");
             }
         } catch (UnknownHostException e) {
             logger.debug("unknown hostname: {}", tcpHostName);

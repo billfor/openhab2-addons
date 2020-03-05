@@ -31,7 +31,37 @@ If the bridge *discovery* parameter is set to *true*, the first time a status me
 
 _Describe what is needed to manually configure a thing, either through the (Paper) UI or via a thing-file. This should be mainly about its mandatory and optional configuration parameters. A short example entry for a thing file can help!_
 
-_Note that it is planned to generate some part of this based on the XML files within ```src/main/resources/ESH-INF/thing``` of your binding._
+### ipbridge
+
+* **hostname** (required) The hostname of the Alarm Decoder device
+* **tcpPort** (default = 10000) TCP port number for the Alarm Decoder connection
+* **discovery** (default = false) Enable automatic discovery of zones and RF zones
+* **reconnect** (1-60, default = 5) The period in minutes that the handler will wait between connection attempts
+* **heartbeat** (1-60, default = 5) The period in minutes between connection heartbeat checks
+
+### serialbridge
+
+* **serialPort** (required) The name of the serial port used to connect to the Alarm Decoder device
+* **bitrate** Speed of the serial connection
+* **discovery** (default=false) Enable automatic discovery of zones and RF zones
+
+### zone
+
+* **address** (required) Zone address
+* **channel** (required) Zone channel
+
+### rfzone
+
+* **serial** (required) Serial number of the RF zone
+
+### keypad
+
+* **addressMask** (required) Keypad address mask (0 = All addresses)
+* **sendCommands** (default = false) Allow keypad commands to be sent to the alarm system from openHAB. Enabling this means the alarm system will be only as secure as your openHAB system.
+
+### lrr
+
+* **partition** (default = 0) Partition for which to receive LRR events (0 = All)
 
 ## Channels
 
