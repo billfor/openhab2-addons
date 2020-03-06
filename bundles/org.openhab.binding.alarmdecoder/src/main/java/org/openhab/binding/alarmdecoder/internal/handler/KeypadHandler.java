@@ -74,7 +74,7 @@ public class KeypadHandler extends ADThingHandler {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR);
             return;
         }
-        singleAddress = Integer.bitCount(config.addressMask) == 1;
+        singleAddress = (Integer.bitCount(config.addressMask) == 1);
         logger.debug("Keypad handler initializing for address mask {}", config.addressMask);
 
         initDeviceState();
@@ -125,7 +125,15 @@ public class KeypadHandler extends ADThingHandler {
                         return;
                     }
 
-                    // TODO: Replace A-H in command string with special keys 1-8
+                    // Replace A-H in command string with special key strings
+                    cmd = cmd.replace("A", ADCommand.SPECIAL_KEY_1);
+                    cmd = cmd.replace("B", ADCommand.SPECIAL_KEY_2);
+                    cmd = cmd.replace("C", ADCommand.SPECIAL_KEY_3);
+                    cmd = cmd.replace("D", ADCommand.SPECIAL_KEY_4);
+                    cmd = cmd.replace("E", ADCommand.SPECIAL_KEY_5);
+                    cmd = cmd.replace("F", ADCommand.SPECIAL_KEY_6);
+                    cmd = cmd.replace("G", ADCommand.SPECIAL_KEY_7);
+                    cmd = cmd.replace("H", ADCommand.SPECIAL_KEY_8);
 
                     if (singleAddress) {
                         sendCommand(ADCommand.addressedMessage(config.addressMask, cmd)); // send from keypad address

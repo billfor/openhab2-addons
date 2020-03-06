@@ -34,7 +34,7 @@ public final class ADCommand {
     public static final String SPECIAL_KEY_8 = "\u0008\u0008\u0008";
 
     // public static final String KEYPAD_COMMAND_CHARACTERS = "0123456789*#<>";
-    public static final String KEYPAD_COMMAND_REGEX = "^[0-9*#<>]+$";
+    public static final String KEYPAD_COMMAND_REGEX = "^[0-9A-H*#<>]+$";
 
     private static final String TERM = "\r\n";
 
