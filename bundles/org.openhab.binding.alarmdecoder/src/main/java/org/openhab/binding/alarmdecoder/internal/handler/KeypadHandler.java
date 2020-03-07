@@ -54,7 +54,7 @@ public class KeypadHandler extends ADThingHandler {
 
     /**
      * Returns true if this handler is responsible for the supplied address mask.
-     * This is true is this handler's address mask is 0 (all), the supplied address mask is 0 (all), or if any bits in
+     * This is true if this handler's address mask is 0 (all), the supplied address mask is 0 (all), or if any bits in
      * this handler's address mask match bits set in the supplied address mask.
      */
     public Boolean responsibleFor(final int addressMask) {
@@ -149,6 +149,20 @@ public class KeypadHandler extends ADThingHandler {
         // TODO: Update channels only if linked?
 
         logger.trace("Keypad handler for address mask {} received update: {}", config.addressMask, kpm);
+
+        if (kpm.alphaMessage.contains("Hit * for faults") || kpm.alphaMessage.contains("Press * to show faults")
+                || kpm.alphaMessage.contains("Press * Key")) {
+            logger.info("Panel is ready to show faults.");
+            if (config.sendStar) {
+                logger.info("Sending * command");
+                if (singleAddress) {
+                    sendCommand(ADCommand.addressedMessage(config.addressMask, "*")); // send from keypad address
+                } else {
+                    sendCommand(new ADCommand("*")); // send from AD address
+                }
+            }
+        }
+
         updateState(CHANNEL_KP_ZONE, new DecimalType(kpm.getZone()));
         updateState(CHANNEL_KP_TEXT, new StringType(kpm.alphaMessage));
 
