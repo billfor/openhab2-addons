@@ -150,11 +150,10 @@ public class KeypadHandler extends ADThingHandler {
 
         logger.trace("Keypad handler for address mask {} received update: {}", config.addressMask, kpm);
 
-        if (kpm.alphaMessage.contains("Hit * for faults") || kpm.alphaMessage.contains("Press * to show faults")
-                || kpm.alphaMessage.contains("Press * Key")) {
-            logger.info("Panel is ready to show faults.");
-            if (config.sendStar) {
-                logger.info("Sending * command");
+        if (config.sendStar) {
+            if (kpm.alphaMessage.contains("Hit * for faults") || kpm.alphaMessage.contains("Press * to show faults")
+                    || kpm.alphaMessage.contains("Press * Key")) {
+                logger.debug("Sending * command to show faults.");
                 if (singleAddress) {
                     sendCommand(ADCommand.addressedMessage(config.addressMask, "*")); // send from keypad address
                 } else {

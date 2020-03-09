@@ -216,11 +216,11 @@
 				<description>Allow keypad commands to be sent to the alarm system from openHAB. Enabling this means the alarm system will be only as secure as your openHAB system.</description>
 				<default>false</default>
 			</parameter>
-            <parameter name="sendStar" type="boolean">
-                <label>Send *</label>
-                <description>When disarmed, send * character to obtain zone fault information.</description>
-                <default>false</default>
-            </parameter>			
+			<parameter name="sendStar" type="boolean">
+				<label>Send * for Fault Info</label>
+				<description>When disarmed, automatically send * character to obtain zone fault information.</description>
+				<default>false</default>
+			</parameter>			
 		</config-description>
 
 	</thing-type>
