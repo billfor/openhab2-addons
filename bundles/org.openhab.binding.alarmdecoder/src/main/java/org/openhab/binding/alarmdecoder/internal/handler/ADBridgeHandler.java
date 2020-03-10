@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -64,9 +65,9 @@ public abstract class ADBridgeHandler extends BaseBridgeHandler {
     protected @Nullable AlarmDecoderDiscoveryService discoveryService;
     protected boolean discovery;
     protected boolean panelReadyReceived = false;
+    protected volatile @Nullable Date lastReceivedTime;
 
     protected @Nullable ScheduledFuture<?> connectionCheckJob;
-    protected @Nullable ScheduledFuture<?> connectionCheckReconnectJob;
     protected @Nullable ScheduledFuture<?> connectRetryJob;
 
     public ADBridgeHandler(Bridge bridge) {
@@ -75,7 +76,7 @@ public abstract class ADBridgeHandler extends BaseBridgeHandler {
 
     @Override
     public void dispose() {
-        disconnect(); // moved from OH1 deactivate() method
+        disconnect();
     }
 
     @Override
@@ -89,31 +90,7 @@ public abstract class ADBridgeHandler extends BaseBridgeHandler {
 
     @Override
     public void handleCommand(ChannelUID channelUID, Command command) {
-        // TODO
-
-        // Moved from OH1 internalReceiveCommand(String itemName, Command command) method:
-
-        // String param = "INVALID";
-        // if (command instanceof OnOffType) {
-        // OnOffType cmd = (OnOffType) command;
-        // param = cmd.equals(OnOffType.ON) ? "ON" : "OFF";
-        // } else if (command instanceof DecimalType) {
-        // param = ((DecimalType) command).toString();
-        // } else {
-        // logger.info("item {} only accepts DecimalType and OnOffType", itemName);
-        // return;
-        // }
-        //
-        // ArrayList<AlarmDecoderBindingConfig> bcl = getItems(itemName);
-        // for (AlarmDecoderBindingConfig bc : bcl) {
-        // String sendStr = bc.getParameters().get(param);
-        // if (sendStr == null) {
-        // logger.info("{} has no mapping for command {}!", itemName, param);
-        // } else {
-        // String s = sendStr.replace("POUND", "#");
-        // sendADCommand(new ADCommand(s));
-        // }
-        // }
+        // Accepts no commands, so do nothing.
     }
 
     /**
@@ -131,7 +108,7 @@ public abstract class ADBridgeHandler extends BaseBridgeHandler {
             }
         } catch (IOException e) {
             logger.info("Exception while sending command: {}", e.getMessage());
-            // TODO: close connection so it will be re-opened
+            // TODO: close connection so it will be re-opened?
             // disconnect();
         }
     }
@@ -152,13 +129,8 @@ public abstract class ADBridgeHandler extends BaseBridgeHandler {
 
     protected void stopMsgReader() {
         if (msgReaderThread != null) {
-            try {
-                msgReaderThread.interrupt();
-                // wait for thread to stop
-                msgReaderThread.join();
-            } catch (InterruptedException e) {
-                // do nothing
-            }
+            logger.trace("Stopping reader thread.");
+            msgReaderThread.interrupt();
             msgReaderThread = null;
         }
     }
@@ -170,11 +142,14 @@ public abstract class ADBridgeHandler extends BaseBridgeHandler {
         logger.debug("Message reader thread started");
         String msg = null;
         try {
-            // TODO: Send a version command here to get device to respond with VER message.
+            // Send version command to get device to respond with VER message.
             sendADCommand(ADCommand.getVersion());
-            while (reader != null && (msg = reader.readLine()) != null) {
+            while (!Thread.interrupted() && reader != null && (msg = reader.readLine()) != null) {
                 logger.trace("Received msg: {}", msg);
                 ADMsgType mt = ADMsgType.getMsgType(msg);
+                if (mt != ADMsgType.INVALID) {
+                    lastReceivedTime = new Date();
+                }
                 try {
                     switch (mt) {
                         case KPM:
@@ -202,16 +177,18 @@ public abstract class ADBridgeHandler extends BaseBridgeHandler {
                 }
             }
             if (msg == null) {
-                logger.warn("End of input stream detected");
+                logger.info("End of input stream detected");
                 updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, "Connection lost");
             }
         } catch (IOException e) {
-            logger.warn("I/O error while reading from stream: {}", e.getMessage());
+            logger.debug("I/O error while reading from stream: {}", e.getMessage());
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, e.getMessage());
+        } catch (RuntimeException e) {
+            logger.warn("Runtime exception in reader thread", e);
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, e.getMessage());
+        } finally {
+            logger.debug("Message reader thread exiting");
         }
-        // TODO: Catch RuntimeException here, or make sure monitoring job checks for thread exception state
-        logger.debug("Message reader thread exiting");
-        scheduleConnectRetry(1); // TODO: Remove and fix so that monitoring job schedules restart
     }
 
     /**
