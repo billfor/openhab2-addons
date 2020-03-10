@@ -36,8 +36,8 @@ _Describe what is needed to manually configure a thing, either through the (Pape
 * **hostname** (required) The hostname of the Alarm Decoder device
 * **tcpPort** (default = 10000) TCP port number for the Alarm Decoder connection
 * **discovery** (default = false) Enable automatic discovery of zones and RF zones
-* **reconnect** (1-60, default = 5) The period in minutes that the handler will wait between connection attempts
-* **heartbeat** (1-60, default = 5) The period in minutes between connection heartbeat checks
+* **reconnect** (1-60, default = 2) The period in minutes that the handler will wait between connection checks and connection attempts
+* **heartbeat** (1-60, default = 5) The period in minutes after which the connection will be reset if no valid messages have been received
 
 ### serialbridge
 

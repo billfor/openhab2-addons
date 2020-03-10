@@ -21,6 +21,6 @@ public class IPBridgeConfig {
     public String hostname;
     public int tcpPort = 10000;
     public boolean discovery = false;
-    public int reconnect = 5;
+    public int reconnect = 2;
     public int heartbeat = 5;
 }

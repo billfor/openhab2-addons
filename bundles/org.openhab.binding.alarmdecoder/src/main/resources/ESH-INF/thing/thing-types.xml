@@ -29,14 +29,14 @@
 			</parameter>
 			<parameter name="reconnect" type="integer" min="1" max="60" unit="min">
 				<label>Reconnect Interval</label>
-				<description>The period in minutes that the handler will wait between connection attempts</description>
+				<description>The period in minutes that the handler will wait between connection attempts and checks</description>
 				<unitLabel>minutes</unitLabel>
-				<default>5</default>
+				<default>2</default>
 				<advanced>true</advanced>
 			</parameter>
 			<parameter name="heartbeat" type="integer" min="1" max="60" unit="min">
 				<label>Keepalive Heartbeat Interval</label>
-				<description>The period in minutes between connection heartbeat checks</description>
+				<description>The period in minutes after which the connection will be reset if no valid messages have been received</description>
 				<unitLabel>minutes</unitLabel>
 				<default>5</default>
 				<advanced>true</advanced>
