@@ -5,22 +5,23 @@ It acts essentially like a keypad, reading and writing messages on the serial bu
 
 There are several versions of the adapter available: 
 
-* ad2pi (a board that plugs into a Raspberry Pi and so offers network-based TCP connectivity)
-* ad2serial (serial port access)
-* or ad2usb (emulated serial port via USB).
+* *ad2pi* - A board that plugs into a Raspberry Pi and so offers network-based TCP connectivity
+* *ad2serial* - Attached via a serial port
+* *ad2usb* - Attached via USB
 
-This binding allows openHAB to access the status of contacts and motion detectors connected to supported alarm panels, and also to optionally send keypad commands.
+This binding allows openHAB to access the status of wired or wireless contacts and motion detectors connected to supported alarm panels, as well as the state of attached keypads and messages send to attached LRR devices.
+Support is also available for sending keypad commands, including special/programmable keys if they are supported by your panel.
 
 ## Supported Things
 
 The binding supports the following thing types:
 
-* **ipbridge**
-* **serialbridge**
-* **keypad**
-* **zone**
-* **rfzone**
-* **lrr**
+* **ipbridge** - Supports TCP connection to the AD.
+* **serialbridge** - Supports serial/USB connection to the AD.
+* **keypad** - Reports keypad status and optionally sends keypad messages.
+* **zone** - Reports status from zone expanders and relay expanders, and also from built-in zones via emulation.
+* **rfzone** - Reports status from RF zones
+* **lrr** - Reports messages sent to Long Range Radio (LRR) or emulated LRR device.
 
 ## Discovery
 
@@ -29,9 +30,11 @@ If the bridge *discovery* parameter is set to *true*, the first time a status me
 
 ## Thing Configuration
 
-_Describe what is needed to manually configure a thing, either through the (Paper) UI or via a thing-file. This should be mainly about its mandatory and optional configuration parameters. A short example entry for a thing file can help!_
+Alarm Decoder things can be configured through openHAB's management UI, or manually via configuration files.
 
 ### ipbridge
+
+The **ipbridge** thing supports a TCP connection to an Alarm Decoder device such as *ad2pi*.
 
 * **hostname** (required) The hostname of the Alarm Decoder device
 * **tcpPort** (default = 10000) TCP port number for the Alarm Decoder connection
@@ -39,29 +42,88 @@ _Describe what is needed to manually configure a thing, either through the (Pape
 * **reconnect** (1-60, default = 2) The period in minutes that the handler will wait between connection checks and connection attempts
 * **heartbeat** (1-60, default = 5) The period in minutes after which the connection will be reset if no valid messages have been received
 
+Example:
+
+```
+TBD
+```
+
 ### serialbridge
+
+The **serialbridge** thing supports a serial or USB connection to an Alarm Decoder device such as *ad2serial* or *ad2usb*.
+
+Parameters:
 
 * **serialPort** (required) The name of the serial port used to connect to the Alarm Decoder device
 * **bitrate** Speed of the serial connection
 * **discovery** (default=false) Enable automatic discovery of zones and RF zones
 
+Example:
+
+```
+TBD
+```
+
 ### zone
+
+The **zone** thing reports status from zone expanders and relay expanders, and also from built-in zones via emulation.
+
+Parameters:
 
 * **address** (required) Zone address
 * **channel** (required) Zone channel
 
+Example:
+
+```
+TBD
+```
+
 ### rfzone
+
+The **rfzone** thing reports status from wireless zones, such as 5800 series RF devices, if your alarm panel has an RF receiver.
+
+Parameters:
 
 * **serial** (required) Serial number of the RF zone
 
+Example:
+
+```
+TBD
+```
+
 ### keypad
+
+The **keypad** thing reports keypad status and optionally sends keypad messages.
+For panels that support multiple keypad addresses, it can be configured with an address mask of one or more keypad(s) for which it will receive messages.
+When sending messages, it will send from the configured keypad address if only one is configured.
+If a mask containing multiple addresses or 0 (all) is configured, it will send messages from the Alarm Decoder's configured address.
+
+Parameters:
 
 * **addressMask** (required) Keypad address mask (0 = All addresses)
 * **sendCommands** (default = false) Allow keypad commands to be sent to the alarm system from openHAB. Enabling this means the alarm system will be only as secure as your openHAB system.
 
+Example:
+
+```
+TBD
+```
+
 ### lrr
 
+The **lrr** thing reports messages sent to a Long Range Radio (LRR) or emulated LRR device.
+These are specifically formatted messages as described in the [SIA DC-05-1999.09](http://www.alarmdecoder.com/wiki/index.php/File:SIA-ContactIDCodes_Protocol.pdf) standard for Contact ID reporting.
+For panels that support multiple partitions, the partition for which a given lrr thing will receive messages can be defined.
+
 * **partition** (default = 0) Partition for which to receive LRR events (0 = All)
+
+Example:
+
+```
+TBD
+```
 
 ## Channels
 
@@ -118,7 +180,7 @@ The alarmdecoder things expose the following channels:
 
 ## Full Example
 
-_Provide a full usage example based on textual configuration files (*.things, *.items, *.sitemap)._
+TODO: Provide a full usage example based on textual configuration files (*.things, *.items, *.sitemap).
 
 ## Any custom content here!
 
