@@ -79,7 +79,7 @@ public class IPBridgeHandler extends ADBridgeHandler {
         boolean connectionSuccess = false;
 
         try {
-            disconnect(); // make sure we have disconnected
+            disconnect(); // make sure we are disconnected
             if (tcpHostName != null && tcpPort > 0 && tcpPort < 65536) {
                 socket = new Socket(tcpHostName, tcpPort);
                 reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -114,7 +114,6 @@ public class IPBridgeHandler extends ADBridgeHandler {
     }
 
     protected synchronized void connectionCheck() {
-        // TODO: Move to superclass?
         logger.trace("Connection check job running");
 
         if (msgReaderThread != null && !msgReaderThread.isAlive()) {
@@ -122,8 +121,8 @@ public class IPBridgeHandler extends ADBridgeHandler {
             scheduler.submit(this::connect);
         } else {
             Date now = new Date();
-            if (lastReceivedTime != null
-                    && ((lastReceivedTime.getTime() + (config.heartbeat * 60 * 1000)) < now.getTime())) {
+            if (lastReceivedTime != null && config.timeout > 0
+                    && ((lastReceivedTime.getTime() + (config.timeout * 60 * 1000)) < now.getTime())) {
                 logger.info("Last valid message received at {}. Resetting connection.", lastReceivedTime);
                 scheduler.submit(this::connect);
             }
@@ -132,6 +131,7 @@ public class IPBridgeHandler extends ADBridgeHandler {
 
     @Override
     protected synchronized void disconnect() {
+        logger.trace("Disconnecting");
         // stop scheduled connection check and retry jobs
         if (connectRetryJob != null) {
             // use cancel(false) so we don't kill ourselves when connect retry job calls disconnect()
@@ -148,7 +148,6 @@ public class IPBridgeHandler extends ADBridgeHandler {
         // The BufferedReader.readLine() call used in readerThread() is not interruptable.
         if (socket != null) {
             try {
-                logger.trace("Closing socket.");
                 socket.close();
             } catch (IOException e) {
                 logger.debug("error closing socket: {}", e.getMessage());
@@ -160,11 +159,9 @@ public class IPBridgeHandler extends ADBridgeHandler {
 
         try {
             if (writer != null) {
-                logger.trace("Closing writer.");
                 writer.close();
             }
             if (reader != null) {
-                logger.trace("Closing reader.");
                 reader.close();
             }
         } catch (IOException e) {
@@ -172,6 +169,5 @@ public class IPBridgeHandler extends ADBridgeHandler {
         }
         writer = null;
         reader = null;
-
     }
 }

@@ -34,9 +34,9 @@
 				<default>2</default>
 				<advanced>true</advanced>
 			</parameter>
-			<parameter name="heartbeat" type="integer" min="1" max="60" unit="min">
-				<label>Keepalive Heartbeat Interval</label>
-				<description>The period in minutes after which the connection will be reset if no valid messages have been received</description>
+			<parameter name="timeout" type="integer" min="0" max="60" unit="min">
+				<label>Message Receive Timeout</label>
+				<description>The period in minutes after which the connection will be reset if no valid messages have been received. Set to 0 to disable.</description>
 				<unitLabel>minutes</unitLabel>
 				<default>5</default>
 				<advanced>true</advanced>
@@ -58,6 +58,7 @@
 			</parameter>
 			<parameter name="bitrate" type="integer">
 				<label>Bitrate</label>
+                <default>115200</default>				
 				<description>Speed of the serial connection</description>
 			</parameter>
 			<parameter name="discovery" type="boolean">
@@ -204,6 +205,9 @@
 			<channel id="command" typeId="command-channel">
 				<label>Keypad Command</label>
 			</channel>
+			<channel id="intcommand" typeId="int-command-channel">
+				<label>Integer Keypad Command</label>
+			</channel>
 		</channels>
 
 		<config-description>
@@ -220,7 +224,13 @@
 				<label>Send * for Fault Info</label>
 				<description>When disarmed, automatically send * character to obtain zone fault information.</description>
 				<default>false</default>
-			</parameter>			
+			</parameter>
+			<parameter name="commandMapping" type="text">
+				<label>Command Mapping for intcommand Channel</label>
+				<description>Comma separated list of key/value pairs mapping integers to command strings for intcommand channel.</description>
+				<default>0=0,1=1,2=2,3=3,4=4,5=5,6=6,7=7,8=8,9=9,10=*,11=#</default>
+				<advanced>true</advanced>
+			</parameter>
 		</config-description>
 
 	</thing-type>
@@ -301,6 +311,12 @@
 	<!--  Command channel type -->
 	<channel-type id="command-channel" advanced="true">
 		<item-type>String</item-type>
+		<label>Command Channel</label>
+	</channel-type>
+	
+	<!--  Integer Command channel type -->
+	<channel-type id="int-command-channel" advanced="true">
+		<item-type>Number</item-type>
 		<label>Command Channel</label>
 	</channel-type>
 </thing:thing-descriptions>

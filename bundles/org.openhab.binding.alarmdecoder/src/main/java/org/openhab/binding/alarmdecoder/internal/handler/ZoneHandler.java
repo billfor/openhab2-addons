@@ -59,7 +59,6 @@ public class ZoneHandler extends ADThingHandler {
         } else {
             return false;
         }
-        // TODO: Should we also check for ThingStatus.ONLINE?
     }
 
     @Override
@@ -87,7 +86,7 @@ public class ZoneHandler extends ADThingHandler {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "No bridge configured");
         } else if (bridge.getStatus() == ThingStatus.ONLINE) {
             initChannelState();
-            firstUpdateReceived = false;
+            firstUpdateReceived.set(false);
             updateStatus(ThingStatus.ONLINE);
         } else {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.BRIDGE_OFFLINE);
@@ -107,8 +106,7 @@ public class ZoneHandler extends ADThingHandler {
     @Override
     public void notifyPanelReady() {
         logger.trace("Zone handler for {},{} received panel ready notification.", config.address, config.channel);
-        if (!firstUpdateReceived) {
-            firstUpdateReceived = true;
+        if (firstUpdateReceived.compareAndSet(false, true)) {
             updateState(CHANNEL_CONTACT, OpenClosedType.CLOSED);
         }
 
@@ -121,7 +119,7 @@ public class ZoneHandler extends ADThingHandler {
 
     public void handleUpdate(int data) {
         logger.trace("Zone handler for {},{} received update: {}", config.address, config.channel, data);
-        firstUpdateReceived = true;
+        firstUpdateReceived.set(true);
         OpenClosedType state = (data == 0 ? OpenClosedType.CLOSED : OpenClosedType.OPEN);
         updateState(CHANNEL_CONTACT, state);
     }

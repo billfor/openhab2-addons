@@ -18,6 +18,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.smarthome.core.library.types.DecimalType;
 import org.eclipse.smarthome.core.library.types.OnOffType;
 import org.eclipse.smarthome.core.library.types.StringType;
@@ -29,6 +30,7 @@ import org.eclipse.smarthome.core.thing.ThingStatusDetail;
 import org.eclipse.smarthome.core.types.Command;
 import org.openhab.binding.alarmdecoder.internal.config.KeypadConfig;
 import org.openhab.binding.alarmdecoder.internal.protocol.ADCommand;
+import org.openhab.binding.alarmdecoder.internal.protocol.IntCommandMap;
 import org.openhab.binding.alarmdecoder.internal.protocol.KeypadMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,6 +49,7 @@ public class KeypadHandler extends ADThingHandler {
     private @NonNullByDefault({}) KeypadConfig config;
     private boolean singleAddress;
     private Pattern validCommandPattern = Pattern.compile(ADCommand.KEYPAD_COMMAND_REGEX);
+    private @Nullable IntCommandMap intCommandMap;
 
     public KeypadHandler(Thing thing) {
         super(thing);
@@ -75,6 +78,14 @@ public class KeypadHandler extends ADThingHandler {
             return;
         }
         singleAddress = (Integer.bitCount(config.addressMask) == 1);
+
+        try {
+            intCommandMap = new IntCommandMap(config.commandMapping);
+        } catch (IllegalArgumentException e) {
+            logger.warn("Invalid commmandMapping parameter supplied. Error: {}.", e.getMessage());
+            intCommandMap = null;
+        }
+
         logger.debug("Keypad handler initializing for address mask {}", config.addressMask);
 
         initDeviceState();
@@ -111,36 +122,50 @@ public class KeypadHandler extends ADThingHandler {
         if (channelUID.getId().equals(CHANNEL_KP_COMMAND)) {
             if (command instanceof StringType) {
                 String cmd = ((StringType) command).toString();
-                if (cmd.length() > 0) {
-                    if (!config.sendCommands) {
-                        logger.info(
-                                "Sending keypad commands is disabled. Enable using the sendCommands keypad parameter.");
-                        return;
-                    }
-
-                    // check that received command is valid
-                    Matcher matcher = validCommandPattern.matcher(cmd);
-                    if (!matcher.matches()) {
-                        logger.info("Invalid characters in command. Ignoring command: {}", cmd);
-                        return;
-                    }
-
-                    // Replace A-H in command string with special key strings
-                    cmd = cmd.replace("A", ADCommand.SPECIAL_KEY_1);
-                    cmd = cmd.replace("B", ADCommand.SPECIAL_KEY_2);
-                    cmd = cmd.replace("C", ADCommand.SPECIAL_KEY_3);
-                    cmd = cmd.replace("D", ADCommand.SPECIAL_KEY_4);
-                    cmd = cmd.replace("E", ADCommand.SPECIAL_KEY_5);
-                    cmd = cmd.replace("F", ADCommand.SPECIAL_KEY_6);
-                    cmd = cmd.replace("G", ADCommand.SPECIAL_KEY_7);
-                    cmd = cmd.replace("H", ADCommand.SPECIAL_KEY_8);
-
-                    if (singleAddress) {
-                        sendCommand(ADCommand.addressedMessage(config.addressMask, cmd)); // send from keypad address
-                    } else {
-                        sendCommand(new ADCommand(cmd)); // send from AD address
+                handleKeypadCommand(cmd);
+            }
+        } else if (channelUID.getId().equals(CHANNEL_KP_INTCOMMAND)) {
+            if (command instanceof Number) {
+                int icmd = ((Number) command).intValue();
+                if (intCommandMap != null) {
+                    String cmd = intCommandMap.getCommand(icmd);
+                    if (cmd != null) {
+                        handleKeypadCommand(cmd);
                     }
                 }
+            }
+        }
+    }
+
+    private void handleKeypadCommand(String command) {
+        String cmd = command;
+        if (cmd.length() > 0) {
+            if (!config.sendCommands) {
+                logger.info("Sending keypad commands is disabled. Enable using the sendCommands keypad parameter.");
+                return;
+            }
+
+            // check that received command is valid
+            Matcher matcher = validCommandPattern.matcher(cmd);
+            if (!matcher.matches()) {
+                logger.info("Invalid characters in command. Ignoring command: {}", cmd);
+                return;
+            }
+
+            // Replace A-H in command string with special key strings
+            cmd = cmd.replace("A", ADCommand.SPECIAL_KEY_1);
+            cmd = cmd.replace("B", ADCommand.SPECIAL_KEY_2);
+            cmd = cmd.replace("C", ADCommand.SPECIAL_KEY_3);
+            cmd = cmd.replace("D", ADCommand.SPECIAL_KEY_4);
+            cmd = cmd.replace("E", ADCommand.SPECIAL_KEY_5);
+            cmd = cmd.replace("F", ADCommand.SPECIAL_KEY_6);
+            cmd = cmd.replace("G", ADCommand.SPECIAL_KEY_7);
+            cmd = cmd.replace("H", ADCommand.SPECIAL_KEY_8);
+
+            if (singleAddress) {
+                sendCommand(ADCommand.addressedMessage(config.addressMask, cmd)); // send from keypad address
+            } else {
+                sendCommand(new ADCommand(cmd)); // send from AD address
             }
         }
     }
@@ -184,7 +209,5 @@ public class KeypadHandler extends ADThingHandler {
         updateState(CHANNEL_KP_FIRE, (kpm.getStatus(KeypadMessage.BIT_FIRE)) ? OnOffType.ON : OnOffType.OFF);
         updateState(CHANNEL_KP_SYSFAULT, (kpm.getStatus(KeypadMessage.BIT_SYSFAULT)) ? OnOffType.ON : OnOffType.OFF);
         updateState(CHANNEL_KP_PERIMETER, (kpm.getStatus(KeypadMessage.BIT_PERIMETER)) ? OnOffType.ON : OnOffType.OFF);
-
-        firstUpdateReceived = true;
     }
 }

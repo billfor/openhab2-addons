@@ -12,8 +12,10 @@
  */
 package org.openhab.binding.alarmdecoder.internal.config;
 
+import org.openhab.binding.alarmdecoder.internal.handler.IPBridgeHandler;
+
 /**
- * The {@link IPBridgeConfig} class contains fields mapping thing configuration parameters.
+ * The {@link IPBridgeConfig} class contains fields mapping thing configuration parameters for {@link IPBridgeHandler}.
  *
  * @author Bob Adair - Initial contribution
  */
@@ -22,5 +24,5 @@ public class IPBridgeConfig {
     public int tcpPort = 10000;
     public boolean discovery = false;
     public int reconnect = 2;
-    public int heartbeat = 5;
+    public int timeout = 5;
 }

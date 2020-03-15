@@ -12,6 +12,8 @@
  */
 package org.openhab.binding.alarmdecoder.internal.handler;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.smarthome.core.thing.Bridge;
 import org.eclipse.smarthome.core.thing.Thing;
@@ -32,7 +34,7 @@ import org.slf4j.LoggerFactory;
 public abstract class ADThingHandler extends BaseThingHandler {
 
     private final Logger logger = LoggerFactory.getLogger(ADThingHandler.class);
-    protected boolean firstUpdateReceived = false;
+    protected AtomicBoolean firstUpdateReceived = new AtomicBoolean(false);
 
     public ADThingHandler(Thing thing) {
         super(thing);
@@ -64,7 +66,7 @@ public abstract class ADThingHandler extends BaseThingHandler {
 
     /**
      * Send a command via the bridge
-     * 
+     *
      * @param command command to send
      */
     protected void sendCommand(ADCommand command) {

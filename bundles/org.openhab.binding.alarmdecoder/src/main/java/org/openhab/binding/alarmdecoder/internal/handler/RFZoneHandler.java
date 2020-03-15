@@ -80,7 +80,7 @@ public class RFZoneHandler extends ADThingHandler {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "No bridge configured");
         } else if (bridge.getStatus() == ThingStatus.ONLINE) {
             initChannelState();
-            firstUpdateReceived = false;
+            firstUpdateReceived.set(false);
             updateStatus(ThingStatus.ONLINE);
         } else {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.BRIDGE_OFFLINE);
@@ -105,8 +105,7 @@ public class RFZoneHandler extends ADThingHandler {
     @Override
     public void notifyPanelReady() {
         logger.trace("RF Zone handler for {} received panel ready notification.", config.serial);
-        if (!firstUpdateReceived) {
-            firstUpdateReceived = true;
+        if (firstUpdateReceived.compareAndSet(false, true)) {
             updateState(CHANNEL_RF_LOOP1, OpenClosedType.CLOSED);
             updateState(CHANNEL_RF_LOOP2, OpenClosedType.CLOSED);
             updateState(CHANNEL_RF_LOOP3, OpenClosedType.CLOSED);
@@ -121,7 +120,7 @@ public class RFZoneHandler extends ADThingHandler {
 
     public void handleUpdate(int data) {
         logger.trace("RF Zone handler for serial {} received update: {}", config.serial, data);
-        firstUpdateReceived = true;
+        firstUpdateReceived.set(true);
 
         updateState(CHANNEL_RF_LOWBAT, (data & RFXMessage.BIT_LOWBAT) == 0 ? OnOffType.OFF : OnOffType.ON);
         updateState(CHANNEL_RF_SUPERVISION, (data & RFXMessage.BIT_SUPER) == 0 ? OnOffType.OFF : OnOffType.ON);
@@ -131,24 +130,5 @@ public class RFZoneHandler extends ADThingHandler {
         updateState(CHANNEL_RF_LOOP2, (data & RFXMessage.BIT_LOOP2) == 0 ? OpenClosedType.CLOSED : OpenClosedType.OPEN);
         updateState(CHANNEL_RF_LOOP3, (data & RFXMessage.BIT_LOOP3) == 0 ? OpenClosedType.CLOSED : OpenClosedType.OPEN);
         updateState(CHANNEL_RF_LOOP4, (data & RFXMessage.BIT_LOOP4) == 0 ? OpenClosedType.CLOSED : OpenClosedType.OPEN);
-
-        // TODO: Use updateState() or postCommand() ?
-        // postCommand(CHANNEL_LOOP4, state);
-
-        // // From OH1 handler:
-        // ArrayList<AlarmDecoderBindingConfig> bcl = getItems(ADMsgType.RFX, parts[0], null);
-        // for (AlarmDecoderBindingConfig c : bcl) {
-        // if (c.hasFeature("data")) {
-        // int bit = c.getIntParameter("bit", 0, 7, -1);
-        // // apply bitmask if requested, else publish raw number
-        // int v = (bit == -1) ? numeric : ((numeric >> bit) & 0x00000001);
-        // updateItem(c, new DecimalType(v));
-        // } else if (c.hasFeature("contact")) {
-        // // if no loop indicator bitmask is set, default to 0x80
-        // int bit = c.getIntParameter("bitmask", 0, 255, 0x80);
-        // int v = numeric & bit;
-        // updateItem(c, v == 0 ? OpenClosedType.CLOSED : OpenClosedType.OPEN);
-        // }
-        // }
     }
 }

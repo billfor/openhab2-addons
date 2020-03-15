@@ -67,42 +67,27 @@ public class SerialBridgeHandler extends ADBridgeHandler {
         config = getConfigAs(SerialBridgeConfig.class);
         discovery = config.discovery;
 
-        // updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "bridge configuration missing");
+        if (config.serialPort == null) {
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "bridge configuration missing");
+            return;
+        } else {
+            serialDeviceName = config.serialPort;
+        }
 
-        // TODO: Initialize the handler.
-        // The framework requires you to return from this method quickly. Also, before leaving this method a thing
-        // status from one of ONLINE, OFFLINE or UNKNOWN must be set. This might already be the real thing status in
-        // case you can decide it directly.
-        // In case you can not decide the thing status directly (e.g. for long running connection handshake using WAN
-        // access or similar) you should set status UNKNOWN here and then decide the real status asynchronously in the
-        // background.
+        if (config.bitrate != null && config.bitrate > 0) {
+            serialPortSpeed = config.bitrate;
+        }
 
-        // set the thing status to UNKNOWN temporarily and let the background task decide for the real status.
-        // the framework is then able to reuse the resources from the thing handler initialization.
-        // we set this upfront to reliably check status updates in unit tests.
-        updateStatus(ThingStatus.UNKNOWN);
-
-        // moved from OH1 execute() method
         synchronized (this) {
             if (serialPort == null) {
                 connect();
             }
         }
 
-        // Example for background initialization:
-        scheduler.execute(() -> {
-            boolean thingReachable = true; // <background task with long running initialization here>
-            // when done do:
-            if (thingReachable) {
-                updateStatus(ThingStatus.ONLINE);
-            } else {
-                updateStatus(ThingStatus.OFFLINE);
-            }
-        });
-
         logger.trace("Finished initializing serial bridge handler");
     }
 
+    @SuppressWarnings("null")
     @Override
     protected synchronized void connect() {
         try {

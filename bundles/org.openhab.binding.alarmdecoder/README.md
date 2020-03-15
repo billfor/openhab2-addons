@@ -1,16 +1,18 @@
-# alarmdecoder Binding
+# Alarm Decoder Binding
 
 The [Alarm Decoder](http://www.alarmdecoder.com) from Nu Tech Software Solutions is a hardware adapter that interfaces with Ademco/Honeywell and DSC alarm panels.
 It acts essentially like a keypad, reading and writing messages on the serial bus that connects keypads with the main panel.
 
 There are several versions of the adapter available: 
 
-* *ad2pi* - A board that plugs into a Raspberry Pi and so offers network-based TCP connectivity
-* *ad2serial* - Attached via a serial port
-* *ad2usb* - Attached via USB
+* *AD2PI* or *AD2PHAT* - A board that plugs into a Raspberry Pi and offers network-based TCP connectivity
+* *AD2SERIAL* - Attaches to a host via a serial port
+* *AD2USB* - Attaches to a host via USB
 
-This binding allows openHAB to access the status of wired or wireless contacts and motion detectors connected to supported alarm panels, as well as the state of attached keypads and messages send to attached LRR devices.
-Support is also available for sending keypad commands, including special/programmable keys if they are supported by your panel.
+This binding allows openHAB to access the state of wired or wireless contacts and motion detectors connected to supported alarm panels, as well as the state of attached keypads and the messages send to attached LRR devices.
+Support is also available for sending keypad commands, including special/programmable keys supported by your panel.
+
+For those upgrading from the OH1 version of the binding, the [original OH1 README](doc/README_OH1.md) file is available for reference.
 
 ## Supported Things
 
@@ -34,13 +36,13 @@ Alarm Decoder things can be configured through openHAB's management UI, or manua
 
 ### ipbridge
 
-The **ipbridge** thing supports a TCP connection to an Alarm Decoder device such as *ad2pi*.
+The **ipbridge** thing supports a TCP connection to an Alarm Decoder device such as *AD2PI* or *AD2PHAT*.
 
 * **hostname** (required) The hostname of the Alarm Decoder device
 * **tcpPort** (default = 10000) TCP port number for the Alarm Decoder connection
 * **discovery** (default = false) Enable automatic discovery of zones and RF zones
 * **reconnect** (1-60, default = 2) The period in minutes that the handler will wait between connection checks and connection attempts
-* **heartbeat** (1-60, default = 5) The period in minutes after which the connection will be reset if no valid messages have been received
+* **timeout** (0-60, default = 5) The period in minutes after which the connection will be reset if no valid messages have been received. Set to 0 to disable.
 
 Example:
 
@@ -50,7 +52,7 @@ TBD
 
 ### serialbridge
 
-The **serialbridge** thing supports a serial or USB connection to an Alarm Decoder device such as *ad2serial* or *ad2usb*.
+The **serialbridge** thing supports a serial or USB connection to an Alarm Decoder device such as *AD2SERIAL* or *AD2USB*.
 
 Parameters:
 
@@ -100,10 +102,16 @@ For panels that support multiple keypad addresses, it can be configured with an 
 When sending messages, it will send from the configured keypad address if only one is configured.
 If a mask containing multiple addresses or 0 (all) is configured, it will send messages from the Alarm Decoder's configured address.
 
+Commands sent from the keypad thing are limited to the set of valid keypad command characters supported by the Alarm Decoder (0-9,*,#,<,>).
+In addition, the characters A-H will be translated to special keys 1-8.
+Command strings containing invalid characters will be ignored.
+
 Parameters:
 
 * **addressMask** (required) Keypad address mask (0 = All addresses)
 * **sendCommands** (default = false) Allow keypad commands to be sent to the alarm system from openHAB. Enabling this means the alarm system will be only as secure as your openHAB system.
+* **sendStar** (default = false) When disarmed/faulted, automatically send * character to obtain zone fault information.
+* **commandMapping** (optional) Comma separated list of key/value pairs mapping integers to command strings for intcommand channel.
 
 Example:
 
@@ -140,7 +148,7 @@ The alarmdecoder things expose the following channels:
 |  channel     | type    |RO/RW| description                  |
 |--------------|---------|-----|------------------------------|
 | lowbat       | Switch  | RO  |Low battery                   |
-| supervision  | Switch  | RO  |Supervision required          |
+| supervision  | Switch  | RO  |Supervision warning           |
 | loop1        | Contact | RO  |Loop 1 state                  |
 | loop2        | Contact | RO  |Loop 2 state                  |
 | loop3        | Contact | RO  |Loop 3 state                  |
@@ -168,6 +176,11 @@ The alarmdecoder things expose the following channels:
 | sysfault     | Switch  | RO  |System fault                  |
 | perimeter    | Switch  | RO  |Perimeter only                |
 | command      | String  | RW  |Keypad command                |
+| intcommand   | Number  | RW  |Integer keypad command        |
+
+*Note* - The *intcommand* channel is provided for backward compatibility with the OH1 version of the binding.
+The integer to command string mappings are provided by the optional keypad *commandMapping* parameter.
+The default mapping is "0=0,1=1,2=2,3=3,4=4,5=5,6=6,7=7,8=8,9=9,10=*,11=#".
 
 **lrr**
 
@@ -182,7 +195,11 @@ The alarmdecoder things expose the following channels:
 
 TODO: Provide a full usage example based on textual configuration files (*.things, *.items, *.sitemap).
 
-## Any custom content here!
+## Thing Actions
+
+The **ipbridge** and **serialbridge** things expose the following action to the automation engine:
+
+*reboot* - Send command to reboot the Alarm Decoder device. Accepts no parameters.
 
 ## Quirks
 

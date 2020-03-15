@@ -12,13 +12,16 @@
  */
 package org.openhab.binding.alarmdecoder.internal.config;
 
+import org.openhab.binding.alarmdecoder.internal.handler.SerialBridgeHandler;
+
 /**
- * The {@link SerialBridgeConfig} class contains fields mapping thing configuration parameters.
+ * The {@link SerialBridgeConfig} class contains fields mapping thing configuration parameters for
+ * {@link SerialBridgeHandler}.
  *
  * @author Bob Adair - Initial contribution
  */
 public class SerialBridgeConfig {
     public String serialPort;
-    public Integer bitrate;
+    public Integer bitrate = 115200;
     public boolean discovery = false;
 }

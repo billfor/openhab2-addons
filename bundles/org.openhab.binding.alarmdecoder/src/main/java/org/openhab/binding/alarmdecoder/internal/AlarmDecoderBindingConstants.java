@@ -22,9 +22,10 @@ import org.eclipse.smarthome.core.thing.ThingTypeUID;
 
 /**
  * The {@link AlarmDecoderBindingConstants} class defines common constants, which are
- * used across the whole binding.
+ * used throughout the binding.
  *
  * @author Bob Adair - Initial contribution
+ * @author Bill Forsyth - Initial contribution
  */
 @NonNullByDefault
 public class AlarmDecoderBindingConstants {
@@ -84,6 +85,8 @@ public class AlarmDecoderBindingConstants {
     public static final String CHANNEL_KP_SYSFAULT = "sysfault";
     public static final String CHANNEL_KP_PERIMETER = "perimeter";
     public static final String CHANNEL_KP_COMMAND = "command";
+    public static final String CHANNEL_KP_INTCOMMAND = "intcommand";
+    public static final String DEFAULT_MAPPING = "0=0,1=1,2=2,3=3,4=4,5=5,6=6,7=7,8=8,9=9,10=*,11=#";
 
     // Channel IDs for LRRHandler
     public static final String CHANNEL_LRR_PARTITION = "partition";
