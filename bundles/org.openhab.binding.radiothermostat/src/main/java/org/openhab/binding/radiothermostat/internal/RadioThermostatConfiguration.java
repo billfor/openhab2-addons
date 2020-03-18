@@ -17,10 +17,8 @@ package org.openhab.binding.radiothermostat.internal;
  *
  * @author Bill Forsyth - Initial contribution
  */
-public class RadioThermostatConfiguration {
 
-    /**
-     * Sample configuration parameter. Replace with your own.
-     */
-    public String config1;
+public class RadioThermostatConfiguration {
+    public String ip;
+    public Integer refresh;
 }

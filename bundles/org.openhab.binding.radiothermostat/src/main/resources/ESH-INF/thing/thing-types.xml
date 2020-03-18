@@ -4,29 +4,103 @@
 	xmlns:thing="https://openhab.org/schemas/thing-description/v1.0.0"
 	xsi:schemaLocation="https://openhab.org/schemas/thing-description/v1.0.0 https://openhab.org/schemas/thing-description-1.0.0.xsd">
 
-	<!-- Sample Thing Type -->
-	<thing-type id="sample">
+	<!-- Thermostat Thing Type -->
+	<thing-type id="radiothermostat">
 		<label>RadioThermostat Binding Thing</label>
-		<description>Sample thing for RadioThermostat Binding</description>
+		<description>RadioThermostat Thing</description>
 
-		<channels>
-			<channel id="channel1" typeId="sample-channel" />
-		</channels>
+        <channels>
+            <channel id="temperature" typeId="temperature" />
+            <channel id="heatingSetpoint" typeId="heatingSetpoint" />
+            <channel id="coolingSetpoint" typeId="coolingSetpoint" />
+            <channel id="systemMode" typeId="systemMode" />
+            <channel id="systemState" typeId="systemState" />
+            <channel id="systemModeRaw" typeId="systemModeRaw" />
+            <channel id="systemStateRaw" typeId="systemStateRaw" />
+        </channels>
 
 		<config-description>
-			<parameter name="config1" type="text" required="true">
-				<label>Sample Parameter</label>
-				<description>This is a sample text configuration parameter</description>
+			<parameter name="ip" type="text" required="true">
+				<label>IP address</label>
+				<description>IP address or hostname of thermostat.</description>
+			</parameter>
+            <parameter name="refresh" type="integer" min="15">
+                <label>Refresh interval</label>
+                <description>Specifies the refresh interval in seconds.</description>
+                <default>60</default>
 			</parameter>
 		</config-description>
 
 	</thing-type>
 
-	<!-- Sample Channel Type -->
-	<channel-type id="sample-channel">
-		<item-type>radiothermostatItem</item-type>
-		<label>RadioThermostat Binding Channel</label>
-		<description>Sample channel for RadioThermostat Binding</description>
-	</channel-type>
+
+    <channel-type id="systemMode">
+        <item-type>String</item-type>
+        <label>System Mode</label>
+        <description>Current System Operating Mode</description>
+        <state readOnly="false">
+            <options>
+                <option value="off">Off</option>
+                <option value="heat">Heat</option>
+                <option value="cool">Cool</option>
+                <option value="auto">Auto</option>
+            </options>
+        </state>
+    </channel-type>
+
+    <channel-type id="systemModeRaw" advanced="true">
+        <item-type>Number</item-type>
+        <label>System Mode (Raw)</label>
+        <description>Current System Operating Mode, as an integer number</description>
+        <state readOnly="true" />
+    </channel-type>
+
+    <channel-type id="systemState">
+        <item-type>String</item-type>
+        <label>System State</label>
+        <description>Current System Operating State</description>
+        <state readOnly="true">
+            <options>
+                <option value="idle">Idle</option>
+                <option value="heating">Heating</option>
+                <option value="cooling">Cooling</option>
+                <option value="lockout">Lockout</option>
+                <option value="error">Error</option>
+            </options>
+        </state>
+    </channel-type>
+
+    <channel-type id="systemStateRaw" advanced="true">
+        <item-type>Number</item-type>
+        <label>System State (Raw)</label>
+        <description>Current System Operating State, as an integer</description>
+        <state readOnly="true" />
+    </channel-type>
+
+    <channel-type id="heatingSetpoint">
+        <item-type>Number:Temperature</item-type>
+        <label>Heating Setpoint</label>
+        <description>Heating Setpoint</description>
+        <category>Temperature</category>
+        <state readOnly="false" pattern="%.1f %unit%" min="40" max="80" step="1.0" />
+    </channel-type>
+
+    <channel-type id="coolingSetpoint">
+        <item-type>Number:Temperature</item-type>
+        <label>Cooling Setpoint</label>
+        <description>Cooling Setpoint</description>
+        <category>Temperature</category>
+        <state readOnly="false" pattern="%.1f %unit%" min="60" max="95" step="1.0" />
+    </channel-type>
+
+    <channel-type id="temperature">
+        <item-type>Number:Temperature</item-type>
+        <label>Temperature</label>
+        <description>Temperature</description>
+        <category>Temperature</category>
+        <state readOnly="true" pattern="%.1f %unit%">
+        </state>
+    </channel-type>
+
 
 </thing:thing-descriptions>

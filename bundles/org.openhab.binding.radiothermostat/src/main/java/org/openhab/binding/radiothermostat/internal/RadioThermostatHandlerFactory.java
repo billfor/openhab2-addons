@@ -12,7 +12,7 @@
  */
 package org.openhab.binding.radiothermostat.internal;
 
-import static org.openhab.binding.radiothermostat.internal.RadioThermostatBindingConstants.*;
+import static org.openhab.binding.radiothermostat.internal.RadioThermostatBindingConstants.THING_TYPE_RADIOTHERMOSTAT;
 
 import java.util.Collections;
 import java.util.Set;
@@ -36,7 +36,8 @@ import org.osgi.service.component.annotations.Component;
 @Component(configurationPid = "binding.radiothermostat", service = ThingHandlerFactory.class)
 public class RadioThermostatHandlerFactory extends BaseThingHandlerFactory {
 
-    private static final Set<ThingTypeUID> SUPPORTED_THING_TYPES_UIDS = Collections.singleton(THING_TYPE_SAMPLE);
+    private static final Set<ThingTypeUID> SUPPORTED_THING_TYPES_UIDS = Collections
+            .singleton(THING_TYPE_RADIOTHERMOSTAT);
 
     @Override
     public boolean supportsThingType(ThingTypeUID thingTypeUID) {
@@ -47,7 +48,7 @@ public class RadioThermostatHandlerFactory extends BaseThingHandlerFactory {
     protected @Nullable ThingHandler createHandler(Thing thing) {
         ThingTypeUID thingTypeUID = thing.getThingTypeUID();
 
-        if (THING_TYPE_SAMPLE.equals(thingTypeUID)) {
+        if (THING_TYPE_RADIOTHERMOSTAT.equals(thingTypeUID)) {
             return new RadioThermostatHandler(thing);
         }
 

@@ -27,8 +27,18 @@ public class RadioThermostatBindingConstants {
     private static final String BINDING_ID = "radiothermostat";
 
     // List of all Thing Type UIDs
-    public static final ThingTypeUID THING_TYPE_SAMPLE = new ThingTypeUID(BINDING_ID, "sample");
+    public static final ThingTypeUID THING_TYPE_RADIOTHERMOSTAT = new ThingTypeUID(BINDING_ID, "radiothermostat");
 
     // List of all Channel ids
-    public static final String CHANNEL_1 = "channel1";
+    public final static String CHANNEL_TEMPERATURE = "temperature";
+
+    public final static String CHANNEL_HEATING_SETPOINT = "heatingSetpoint";
+    public final static String CHANNEL_COOLING_SETPOINT = "coolingSetpoint";
+    public final static String CHANNEL_SYSTEM_STATE = "systemState";
+    public final static String CHANNEL_SYSTEM_MODE = "systemMode";
+    public final static String CHANNEL_SYSTEM_STATE_RAW = "systemStateRaw";
+    public final static String CHANNEL_SYSTEM_MODE_RAW = "systemModeRaw";
+
+    public final static String REFRESH_INVALID = "refresh-invalid";
+    public final static String EMPTY_INVALID = "empty-invalid";
 }
