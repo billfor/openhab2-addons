@@ -1,0 +1,111 @@
+package org.openhab.binding.radiothermostat.internal.data;
+
+import com.google.gson.annotations.SerializedName;
+
+public class RadioThermostatTstat {
+    public enum Tmode {
+        @SerializedName("0")
+        off(0),
+        @SerializedName("1")
+        heat(1),
+        @SerializedName("2")
+        cool(2),
+        @SerializedName("3")
+        auto(3);
+
+        private int mode;
+
+        Tmode(int mode) {
+            this.mode = mode;
+        }
+
+        public int mode() {
+            return mode;
+        }
+
+        public static Tmode fromInt(int mode) {
+            for (Tmode sm : values()) {
+                if (sm.mode == mode) {
+                    return sm;
+                }
+            }
+            throw (new IllegalArgumentException("Invalid system mode " + mode));
+        }
+    }
+
+    public enum Fmode {
+        @SerializedName("0")
+        auto,
+        @SerializedName("1")
+        circulate,
+        @SerializedName("2")
+        on
+    };
+
+    float temp;
+    Float t_heat;
+    Float t_cool;
+    int hold; // ct50 representation of bool is a numeric 0 or 1.
+    int tstate; // readonly. actual state
+    int fstate; // readonly. actual state
+    Tmode tmode;
+    Fmode fmode;
+
+    public RadioThermostatTstat() {
+        super();
+    }
+
+    public RadioThermostatTstat(float temp, Float t_heat, Float t_cool, int hold, Fmode fmode, Tmode tmode, int tstate,
+            int fstate) {
+        super();
+        this.temp = temp;
+        this.t_heat = t_heat;
+        this.t_cool = t_cool;
+        this.hold = hold;
+        this.fmode = fmode;
+        this.tmode = tmode;
+        this.tstate = tstate;
+        this.fstate = fstate;
+    }
+
+    public float getTemp() {
+        return temp;
+    }
+
+    public Float getHeatingSetpoint() {
+        return t_heat;
+    }
+
+    public Float getCoolingSetpoint() {
+        return t_cool;
+    }
+
+    public int getHold() {
+        return hold;
+    }
+
+    public String getFan() {
+        return fmode.name();
+    }
+
+    public int getFanNumber() {
+        return fmode.ordinal();
+    }
+
+    public int getTstate() {
+        return tstate;
+    }
+
+    public int getFstate() {
+        return fstate;
+    }
+
+    public String getMode() {
+        return tmode.name();
+    }
+
+    public int getModeNumber() {
+        return tmode.ordinal();
+    }
+
+}
