@@ -12,6 +12,9 @@
  */
 package org.openhab.binding.radiothermostat.internal;
 
+import java.util.Collections;
+import java.util.Set;
+
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.smarthome.core.thing.ThingTypeUID;
 
@@ -28,6 +31,14 @@ public class RadioThermostatBindingConstants {
 
     // List of all Thing Type UIDs
     public static final ThingTypeUID THING_TYPE_RADIOTHERMOSTAT = new ThingTypeUID(BINDING_ID, "radiothermostat");
+    public final static Set<ThingTypeUID> SUPPORTED_THING_TYPES = Collections.singleton(THING_TYPE_RADIOTHERMOSTAT);
+
+    // List or properties
+    public static final String PROPERTY_API = "api";
+    public static final String PROPERTY_FIRMWARE = "firmwareVersion";
+    public static final String PROPERTY_NAME = "name";
+    public static final String PROPERTY_MODEL = "model";
+    public final static String PROPERTY_UUID = "uuid";
 
     // List of all Channel ids
     public final static String CHANNEL_TEMPERATURE = "temperature";

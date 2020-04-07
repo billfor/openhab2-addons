@@ -17,6 +17,8 @@ import static org.openhab.binding.radiothermostat.internal.RadioThermostatBindin
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -70,11 +72,12 @@ public class RadioThermostatHandler extends BaseThingHandler {
 
     private RadioThermostatTstat tstat = new RadioThermostatTstat();
 
-    private static final int TIMEOUT_SECONDS = 30;
+    private static final int TIMEOUT_SECONDS = 3;
     private static final int UPDATE_AFTER_COMMAND_SECONDS = 2;
+    private static final int INITIAL_UPDATE_DELAY = 30;
 
     private @Nullable RadioThermostatConfiguration config;
-    private @Nullable Future<?> updatesTask;
+    private @Nullable Future<?> updatesTask, historyTask, propertyTask = null;
 
     private @Nullable String baseURL;
     private final HttpClient httpClient;
@@ -104,7 +107,7 @@ public class RadioThermostatHandler extends BaseThingHandler {
 
         if (command instanceof RefreshType) {
             logger.debug("Refresh command requested for {}", channelUID);
-            startUpdatesTask(0);
+            startUpdatesTask(UPDATE_AFTER_COMMAND_SECONDS);
         } else {
             if (channelUID.getId().equals(CHANNEL_HEATING_SETPOINT)) {
                 QuantityType<Temperature> quantity = commandToQuantityType(command, unitSystem);
@@ -129,7 +132,6 @@ public class RadioThermostatHandler extends BaseThingHandler {
                 logger.debug("Set hold to {}", value);
                 postData("hold", value);
             }
-            startUpdatesTask(UPDATE_AFTER_COMMAND_SECONDS);
         }
     }
 
@@ -162,10 +164,22 @@ public class RadioThermostatHandler extends BaseThingHandler {
     @Override
     public void initialize() {
         logger.debug("Start initializing!");
-        updateStatus(ThingStatus.UNKNOWN);
+        stopUpdateTasks();
 
         config = getConfigAs(RadioThermostatConfiguration.class);
         logger.debug("ip = {}, refresh = {}", config.ip, config.refresh);
+
+        try {
+            baseURL = "http://" + config.ip;
+            if (!httpClient.isStarted()) {
+                httpClient.start();
+            }
+            refresh = config.refresh;
+        } catch (Exception e) {
+            logger.debug("Could not conntect to URL  {}", baseURL, e);
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, e.getMessage());
+        }
+
         if ((config.ip == null) && (!config.discover)) {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR,
                     "One of Hostname/IP address or discovery must be set");
@@ -174,26 +188,40 @@ public class RadioThermostatHandler extends BaseThingHandler {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "Refresh is too low.");
         }
 
-        stopUpdateTasks();
-
         try {
-            baseURL = "http://" + config.ip;
-            if (!httpClient.isStarted()) {
-                httpClient.start();
-            }
-            refresh = config.refresh;
-            startUpdatesTask(0);
-        } catch (Exception e) {
-            logger.debug("Could not conntect to URL  {}", baseURL, e);
-            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, e.getMessage());
+            Map<String, String> properties = editProperties();
+            String name, fw, api, model;
+            JsonObject content;
+            content = new JsonParser().parse(getData("/sys/name")).getAsJsonObject();
+            name = content.get("name").getAsString();
+            logger.debug("My name {}", name);
+
+            content = new JsonParser().parse(getData("/sys")).getAsJsonObject();
+            fw = content.get("fw_version").getAsString();
+            api = content.get("api_version").getAsString();
+
+            content = new JsonParser().parse(getData("/tstat/model")).getAsJsonObject();
+            model = content.get("model").getAsString();
+
+            properties.put(PROPERTY_NAME, name);
+            properties.put(PROPERTY_UUID, name);
+            properties.put(PROPERTY_FIRMWARE, fw);
+            properties.put(PROPERTY_API, api);
+            properties.put(PROPERTY_MODEL, model);
+
+            logger.debug("Set properties name: {}, fw: {}, api: {}, model: {}", name, fw, api, model);
+
+            updateProperties(properties);
+            updateStatus(ThingStatus.ONLINE);
+        } catch (RadioThermostatCommunicationException | JsonSyntaxException e) {
+            logger.debug("Error fetching init data {}", baseURL, e);
+            updateStatus(ThingStatus.UNKNOWN);
         }
-
-        // TODO: initialize quickly
-
         logger.debug("Finished initializing!");
     }
 
     private String getData(String path) throws RadioThermostatCommunicationException {
+        String content;
         try {
             String requestString = baseURL + path;
             logger.trace("Requesting {}", requestString);
@@ -205,7 +233,7 @@ public class RadioThermostatHandler extends BaseThingHandler {
                 throw new RadioThermostatCommunicationException(
                         "Error communicating with thermostat. Error Code: " + response.getStatus());
             }
-            String content = response.getContentAsString();
+            content = response.getContentAsString();
             logger.trace("sendRequest: response {}", content);
             return content;
         } catch (InterruptedException | TimeoutException | ExecutionException e) {
@@ -232,12 +260,12 @@ public class RadioThermostatHandler extends BaseThingHandler {
                             : UnDefType.UNDEF);
             updateState(CHANNEL_HOLD, (tstat.getHold() == 1) ? OnOffType.ON : OnOffType.OFF);
             updateState(CHANNEL_FAN, new StringType(tstat.getFan()));
+            updateState(CHANNEL_FAN_NUMBER, new DecimalType(tstat.getFanNumber()));
             updateState(CHANNEL_MODE, new StringType(tstat.getMode()));
+            updateState(CHANNEL_MODE_NUMBER, new DecimalType(tstat.getModeNumber()));
 
             updateState(CHANNEL_FAN_STATE, new DecimalType(tstat.getFstate()));
             updateState(CHANNEL_MODE_STATE, new DecimalType(tstat.getTstate()));
-            updateState(CHANNEL_MODE_NUMBER, new DecimalType(tstat.getModeNumber()));
-            updateState(CHANNEL_FAN_NUMBER, new DecimalType(tstat.getFanNumber()));
 
             logger.debug("Got mode {} and fan {}", tstat.getMode(), tstat.getFan());
 
@@ -251,6 +279,7 @@ public class RadioThermostatHandler extends BaseThingHandler {
     private synchronized void startUpdatesTask(int initialDelay) {
         stopUpdateTasks();
         updatesTask = scheduler.scheduleWithFixedDelay(this::updateData, initialDelay, refresh, TimeUnit.SECONDS);
+        // TODO: add history task
     }
 
     @SuppressWarnings("null")
@@ -326,6 +355,18 @@ public class RadioThermostatHandler extends BaseThingHandler {
         public RadioThermostatCommunicationException(String message) {
             super(message);
         }
+    }
+
+    /**
+     * Returns a copy of the properties map, that can be modified. The method {@link
+     * BaseThingHandler#updateProperties(Map<String, String> properties)} must be called to persist the properties.
+     *
+     * @return copy of the thing properties (not null)
+     */
+    @Override
+    protected Map<String, String> editProperties() {
+        Map<String, String> properties = this.thing.getProperties();
+        return new HashMap<>(properties);
     }
 
 }
