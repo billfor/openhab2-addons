@@ -32,21 +32,24 @@
             <channel id="coolRuntimeYesterday" typeId="coolRuntimeYesterday" />
             
         </channels>
+        
+         <properties>
+            <property name="ip"></property>
+            <property name="model"></property>
+            <property name="name"></property>
+            <property name="firmwareVersion"></property>
+        </properties>
+        <representation-property>uuid</representation-property>        
 
 		<config-description>
-			<parameter name="ip" type="text">
+			<parameter name="ip" type="text" required="true">
 				<label>IP address</label>
 				<description>IP address or hostname of thermostat.</description>
 			</parameter>
-            <parameter name="refresh" type="integer" min="15" required="true">
+            <parameter name="refresh" type="integer" min="60" required="true">
                 <label>Refresh interval</label>
                 <description>Specifies the refresh interval in seconds.</description>
                 <default>60</default>
-			</parameter>
-			<parameter name="discovery" type="boolean">
-				<label>Enable Discovery</label>
-				<description>Enable automatic discovery thermostats.</description>
-				<default>false</default>
 			</parameter>
 		</config-description>
 

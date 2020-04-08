@@ -170,7 +170,6 @@ public class RadioThermostatHandler extends BaseThingHandler {
         logger.debug("ip = {}, refresh = {}", config.ip, config.refresh);
 
         try {
-            baseURL = "http://" + config.ip;
             if (!httpClient.isStarted()) {
                 httpClient.start();
             }
@@ -180,17 +179,22 @@ public class RadioThermostatHandler extends BaseThingHandler {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, e.getMessage());
         }
 
-        if ((config.ip == null) && (!config.discover)) {
-            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR,
-                    "One of Hostname/IP address or discovery must be set");
+        if (config.ip == null) {
+            config.ip = getThing().getProperties().get(PROPERTY_IP); // it must have been autodiscovered
+            // updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR,"Hostname/IP address or discovery
+            // must be set");
         }
-        if (config.refresh < 30) {
-            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "Refresh is too low.");
+
+        if (config.refresh < 60) {
+            config.refresh = 60;
+            // updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "Refresh is too low.");
         }
+
+        baseURL = "http://" + config.ip;
 
         try {
             Map<String, String> properties = editProperties();
-            String name, fw, api, model;
+            String name, fw, api, model, uuid;
             JsonObject content;
             content = new JsonParser().parse(getData("/sys/name")).getAsJsonObject();
             name = content.get("name").getAsString();
@@ -199,15 +203,17 @@ public class RadioThermostatHandler extends BaseThingHandler {
             content = new JsonParser().parse(getData("/sys")).getAsJsonObject();
             fw = content.get("fw_version").getAsString();
             api = content.get("api_version").getAsString();
+            uuid = content.get("uuid").getAsString();
 
             content = new JsonParser().parse(getData("/tstat/model")).getAsJsonObject();
             model = content.get("model").getAsString();
 
             properties.put(PROPERTY_NAME, name);
-            properties.put(PROPERTY_UUID, name);
+            properties.put(PROPERTY_UUID, uuid);
             properties.put(PROPERTY_FIRMWARE, fw);
             properties.put(PROPERTY_API, api);
             properties.put(PROPERTY_MODEL, model);
+            properties.put(PROPERTY_IP, config.ip);
 
             logger.debug("Set properties name: {}, fw: {}, api: {}, model: {}", name, fw, api, model);
 

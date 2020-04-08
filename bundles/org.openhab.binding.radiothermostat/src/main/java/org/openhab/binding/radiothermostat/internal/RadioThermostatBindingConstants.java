@@ -39,6 +39,7 @@ public class RadioThermostatBindingConstants {
     public static final String PROPERTY_NAME = "name";
     public static final String PROPERTY_MODEL = "model";
     public final static String PROPERTY_UUID = "uuid";
+    public final static String PROPERTY_IP = "ip";
 
     // List of all Channel ids
     public final static String CHANNEL_TEMPERATURE = "temperature";
