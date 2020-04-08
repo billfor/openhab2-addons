@@ -63,6 +63,7 @@ import com.google.gson.JsonSyntaxException;
  * sent to one of the channels.
  *
  * @author Bill Forsyth - Initial contribution
+ *         based on the Venstar binding by William Welliver and Dan Cunningham
  */
 @NonNullByDefault
 public class RadioThermostatHandler extends BaseThingHandler {

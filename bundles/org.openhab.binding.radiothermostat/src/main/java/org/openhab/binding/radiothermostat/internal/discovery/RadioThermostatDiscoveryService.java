@@ -31,12 +31,19 @@ import org.slf4j.LoggerFactory;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+/**
+ * The {@link RadioThermostatDiscoveryService} is responsible for discovery of
+ * RadioThermostats on the local network
+ * 
+ * @author Bill Forsyth - Modified for the RadioThermostat's peculiar discovery mode
+ * @author William Welliver - Initial contribution
+ * @author Dan Cunningham - Refactoring and Improvements
+ */
+
 @Component(service = DiscoveryService.class, configurationPid = "discovery.radiothermostat")
 public class RadioThermostatDiscoveryService extends AbstractDiscoveryService {
     private final Logger logger = LoggerFactory.getLogger(RadioThermostatDiscoveryService.class);
     private static final String RADIOTHERMOSTAT_DISCOVERY_MESSAGE = "TYPE: WM-DISCOVER\r\nVERSION: 1.0\r\n\r\nservices:com.marvell.wm.system*\r\n\r\n";
-    // private static final String RADIOTHERMOSTAT_DISCOVERY_MESSAGE = "TYPE: WM-DISCOVER\\r\\nVERSION:
-    // 1.0\\r\\n\\r\\nservices:com.marvell.wm.system*\\r\\n\\r\\n";
 
     private static final String SSDP_MATCH = "WM-NOTIFY";
     private static final int BACKGROUND_SCAN_INTERVAL_SECONDS = 300;
