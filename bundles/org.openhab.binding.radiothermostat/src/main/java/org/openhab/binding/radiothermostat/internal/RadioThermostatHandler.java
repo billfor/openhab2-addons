@@ -49,6 +49,7 @@ import org.eclipse.smarthome.core.types.Command;
 import org.eclipse.smarthome.core.types.RefreshType;
 import org.eclipse.smarthome.core.types.UnDefType;
 import org.openhab.binding.radiothermostat.internal.data.RadioThermostatTstat;
+import org.openhab.binding.radiothermostat.internal.data.RadioThermostatTstatDatalog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,6 +73,7 @@ public class RadioThermostatHandler extends BaseThingHandler {
     private int refresh;
 
     private RadioThermostatTstat tstat = new RadioThermostatTstat();
+    private RadioThermostatTstatDatalog datalog = new RadioThermostatTstatDatalog();
 
     private static final int TIMEOUT_SECONDS = 3;
     private static final int UPDATE_AFTER_COMMAND_SECONDS = 2;
@@ -255,6 +257,7 @@ public class RadioThermostatHandler extends BaseThingHandler {
             if (!isFutureValid(localUpdatesTask)) {
                 return;
             }
+
             tstat = gson.fromJson(response, RadioThermostatTstat.class);
             updateState(CHANNEL_TEMPERATURE, new QuantityType<Temperature>(tstat.getTemp(), unitSystem));
             updateState(CHANNEL_HEATING_SETPOINT,
@@ -275,6 +278,18 @@ public class RadioThermostatHandler extends BaseThingHandler {
             updateState(CHANNEL_MODE_STATE, new DecimalType(tstat.getTstate()));
 
             logger.debug("Got mode {} and fan {}", tstat.getMode(), tstat.getFan());
+
+            response = getData("/tstat/datalog");
+            logger.debug("datalog {}", response);
+
+            datalog = gson.fromJson(response, RadioThermostatTstatDatalog.class);
+
+            int hours = datalog.getLog();
+
+            logger.debug("heat hours {}", hours);
+
+            // datalog.getCool();
+            // datalog.getHeat();
 
             goOnline();
         } catch (RadioThermostatCommunicationException | JsonSyntaxException e) {
