@@ -23,14 +23,17 @@ public class RadioThermostatTstat {
             return mode;
         }
 
-        public static Tmode fromInt(int mode) {
-            for (Tmode sm : values()) {
-                if (sm.mode == mode) {
-                    return sm;
-                }
-            }
-            throw (new IllegalArgumentException("Invalid system mode " + mode));
-        }
+        /*
+         * public static Tmode fromInt(int mode) {
+         * for (Tmode sm : values()) {
+         * if (sm.mode == mode) {
+         * return sm;
+         * }
+         * }
+         * throw (new IllegalArgumentException("Invalid system mode " + mode));
+         * }
+         */
+
     }
 
     public enum Fmode {
@@ -55,18 +58,22 @@ public class RadioThermostatTstat {
         super();
     }
 
-    public RadioThermostatTstat(float temp, Float t_heat, Float t_cool, int hold, Fmode fmode, Tmode tmode, int tstate,
-            int fstate) {
-        super();
-        this.temp = temp;
-        this.t_heat = t_heat;
-        this.t_cool = t_cool;
-        this.hold = hold;
-        this.fmode = fmode;
-        this.tmode = tmode;
-        this.tstate = tstate;
-        this.fstate = fstate;
-    }
+    // we're not setting anything. this status is r/o. so this is just for reference.
+    /*
+     * public RadioThermostatTstat(float temp, Float t_heat, Float t_cool, int hold, Fmode fmode, Tmode tmode, int
+     * tstate,
+     * int fstate) {
+     * super();
+     * this.temp = temp;
+     * this.t_heat = t_heat;
+     * this.t_cool = t_cool;
+     * this.hold = hold;
+     * this.fmode = fmode;
+     * this.tmode = tmode;
+     * this.tstate = tstate;
+     * this.fstate = fstate;
+     * }
+     */
 
     public float getTemp() {
         return temp;

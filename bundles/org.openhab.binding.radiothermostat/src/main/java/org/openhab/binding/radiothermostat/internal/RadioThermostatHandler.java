@@ -279,17 +279,20 @@ public class RadioThermostatHandler extends BaseThingHandler {
 
             logger.debug("Got mode {} and fan {}", tstat.getMode(), tstat.getFan());
 
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                logger.trace("Sleep interrupted: {}", e.getMessage());
+            }
+
             response = getData("/tstat/datalog");
             logger.debug("datalog {}", response);
 
             datalog = gson.fromJson(response, RadioThermostatTstatDatalog.class);
+            int cool_usage = datalog.getYesterday().getCool().getUsage();
+            int heat_usage = datalog.getYesterday().getHeat().getUsage();
 
-            int hours = datalog.getLog();
-
-            logger.debug("heat hours {}", hours);
-
-            // datalog.getCool();
-            // datalog.getHeat();
+            logger.debug("usage cool: {} heat: {}", cool_usage, heat_usage);
 
             goOnline();
         } catch (RadioThermostatCommunicationException | JsonSyntaxException e) {
@@ -301,7 +304,6 @@ public class RadioThermostatHandler extends BaseThingHandler {
     private synchronized void startUpdatesTask(int initialDelay) {
         stopUpdateTasks();
         updatesTask = scheduler.scheduleWithFixedDelay(this::updateData, initialDelay, refresh, TimeUnit.SECONDS);
-        // TODO: add history task
     }
 
     @SuppressWarnings("null")
