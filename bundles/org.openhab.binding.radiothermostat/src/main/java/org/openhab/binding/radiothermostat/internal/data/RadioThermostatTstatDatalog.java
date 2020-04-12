@@ -27,6 +27,12 @@ public class RadioThermostatTstatDatalog {
         private int minute;
 
         public int getUsage() {
+            /*
+             * No point in doing this if we can't [easily] persist
+             * ZonedDateTime foo= new ZonedDateTime(null, null, ZoneId.systemDefault());
+             * ZonedDateTime elapsedTime=ZonedDateTime.plusMinutes(minute).plusHours(hour);
+             * private DateTimeType test= new DateTimeType(elapsedTime);
+             */
             return hour * 60 + minute;
         }
     }

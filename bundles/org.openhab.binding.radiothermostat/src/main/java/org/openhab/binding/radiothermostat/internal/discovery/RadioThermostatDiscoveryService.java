@@ -260,5 +260,4 @@ public class RadioThermostatDiscoveryService extends AbstractDiscoveryService {
         logger.trace("New RadioThermostat discovered with ID=<{}>", uuid);
         this.thingDiscovered(result);
     }
-
 }

@@ -51,16 +51,11 @@ public class RadioThermostatBindingConstants {
     public final static String CHANNEL_COOLING_SETPOINT = "coolingSetpoint";
     public final static String CHANNEL_SYSTEM_STATE = "systemState";
 
-    public final static String CHANNEL_HEAT_RUNTIME_TODAY = "heatRuntimeToday";
     public final static String CHANNEL_HEAT_RUNTIME_YESTERDAY = "heatRuntimeYesterday";
-    public final static String CHANNEL_COOL_RUNTIME_TODAY = "coolRuntimeToday";
     public final static String CHANNEL_COOL_RUNTIME_YESTERDAY = "coolRuntimeYesterday";
 
     public final static String CHANNEL_FAN_NUMBER = "fanNumber";
     public final static String CHANNEL_MODE_NUMBER = "modeNumber";
     public final static String CHANNEL_FAN_STATE = "fanState";
     public final static String CHANNEL_MODE_STATE = "modeState";
-
-    public final static String REFRESH_INVALID = "refresh-invalid";
-    public final static String EMPTY_INVALID = "empty-invalid";
 }

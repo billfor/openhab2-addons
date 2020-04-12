@@ -40,6 +40,7 @@ import org.eclipse.smarthome.core.library.types.OnOffType;
 import org.eclipse.smarthome.core.library.types.QuantityType;
 import org.eclipse.smarthome.core.library.types.StringType;
 import org.eclipse.smarthome.core.library.unit.ImperialUnits;
+import org.eclipse.smarthome.core.library.unit.SmartHomeUnits;
 import org.eclipse.smarthome.core.thing.ChannelUID;
 import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingStatus;
@@ -48,6 +49,8 @@ import org.eclipse.smarthome.core.thing.binding.BaseThingHandler;
 import org.eclipse.smarthome.core.types.Command;
 import org.eclipse.smarthome.core.types.RefreshType;
 import org.eclipse.smarthome.core.types.UnDefType;
+import org.joda.time.DateTime;
+import org.joda.time.Interval;
 import org.openhab.binding.radiothermostat.internal.data.RadioThermostatTstat;
 import org.openhab.binding.radiothermostat.internal.data.RadioThermostatTstatDatalog;
 import org.slf4j.Logger;
@@ -76,18 +79,23 @@ public class RadioThermostatHandler extends BaseThingHandler {
     private RadioThermostatTstatDatalog datalog = new RadioThermostatTstatDatalog();
 
     private static final int TIMEOUT_SECONDS = 3;
+    // TODO: use this
+    private static final int RETRY_ATTEMPTS = 3;
+
     private static final int UPDATE_AFTER_COMMAND_SECONDS = 2;
     private static final int INITIAL_UPDATE_DELAY = 30;
+    private static final int HISTORY_CHECK_GRACE_PERIOD = 600;
 
     private @Nullable RadioThermostatConfiguration config;
+    // TODO: put daily runtime GET in job
     private @Nullable Future<?> updatesTask, historyTask, propertyTask = null;
 
     private @Nullable String baseURL;
     private final HttpClient httpClient;
     private final Gson gson;
 
-    private Unit<Temperature> unitSystem = ImperialUnits.FAHRENHEIT; // CT50 always reports in F. C setting is just for
-                                                                     // display.
+    private Unit<Temperature> unitSystem = ImperialUnits.FAHRENHEIT; // CT50 seems to allways report in F
+                                                                     // C setting is for display.
 
     public RadioThermostatHandler(Thing thing) {
         super(thing);
@@ -259,6 +267,8 @@ public class RadioThermostatHandler extends BaseThingHandler {
             }
 
             tstat = gson.fromJson(response, RadioThermostatTstat.class);
+            logger.debug("Got mode {} and fan {}", tstat.getMode(), tstat.getFan());
+
             updateState(CHANNEL_TEMPERATURE, new QuantityType<Temperature>(tstat.getTemp(), unitSystem));
             updateState(CHANNEL_HEATING_SETPOINT,
                     (tstat.getHeatingSetpoint() != null)
@@ -277,7 +287,12 @@ public class RadioThermostatHandler extends BaseThingHandler {
             updateState(CHANNEL_FAN_STATE, new DecimalType(tstat.getFstate()));
             updateState(CHANNEL_MODE_STATE, new DecimalType(tstat.getTstate()));
 
-            logger.debug("Got mode {} and fan {}", tstat.getMode(), tstat.getFan());
+            // Only get the runtime history once a day, inline with the other calls so we can sleep, otherwise
+            // thermostat can timeout.
+            DateTime startOfDay = DateTime.now().withTimeAtStartOfDay().plusSeconds(HISTORY_CHECK_GRACE_PERIOD);
+            if (new Interval(startOfDay, startOfDay.plusSeconds(refresh)).containsNow()) {
+                logger.trace("Fetch runlogs");
+            }
 
             try {
                 Thread.sleep(1000);
@@ -291,8 +306,11 @@ public class RadioThermostatHandler extends BaseThingHandler {
             datalog = gson.fromJson(response, RadioThermostatTstatDatalog.class);
             int cool_usage = datalog.getYesterday().getCool().getUsage();
             int heat_usage = datalog.getYesterday().getHeat().getUsage();
-
             logger.debug("usage cool: {} heat: {}", cool_usage, heat_usage);
+            // updateState(CHANNEL_STATUS_HOURS, new QuantityType<>(info.getStatus().getHours(), SmartHomeUnits.HOUR));
+
+            updateState(CHANNEL_HEAT_RUNTIME_YESTERDAY, new QuantityType<>(heat_usage, SmartHomeUnits.MINUTE));
+            updateState(CHANNEL_COOL_RUNTIME_YESTERDAY, new QuantityType<>(cool_usage, SmartHomeUnits.MINUTE));
 
             goOnline();
         } catch (RadioThermostatCommunicationException | JsonSyntaxException e) {
