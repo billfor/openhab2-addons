@@ -143,40 +143,21 @@
 		<item-type>DateTime</item-type>
 		<label>Last update</label>
 		<description>Time of last update from the thermostat.</description>
-		<state readOnly="true"  />
-		<!-- <state readOnly="true" pattern="%1$td.%1$tm.%1$tY %1$tH:%1$tM" /> -->
-	</channel-type>
-
-	<channel-type id="heatRuntimeToday" advanced="true">
-		<item-type>DateTime</item-type>
-		<label>Heatime time ON today</label>
-		<description>Elapsed time since midnight spent heating.</description>
-		<state readOnly="true"  />
-		<!-- <state readOnly="true" pattern="%1$td.%1$tm.%1$tY %1$tH:%1$tM" /> -->
+		<state readOnly="true" pattern="%1$tH:%1$tM" />
 	</channel-type>
 
 	<channel-type id="heatRuntimeYesterday" advanced="true">
-		<item-type>DateTime</item-type>
+		<item-type>Number:Time</item-type>
 		<label>Heatime time ON yesterday</label>
-		<description>Elapsed time spent heating yesterday.</description>
-		<state readOnly="true"  />
-		<!-- <state readOnly="true" pattern="%1$td.%1$tm.%1$tY %1$tH:%1$tM" /> -->
+		<description>Elapsed time spent heating yesterday in minutes.</description>
+        <state readOnly="true" pattern="%d %unit%"/>
 	</channel-type>
 	
-	<channel-type id="coolRuntimeToday" advanced="true">
-		<item-type>DateTime</item-type>
-		<label>Cooling time ON today</label>
-		<description>Elapsed time since midnight spent cooling.</description>
-		<state readOnly="true"  />
-		<!-- <state readOnly="true" pattern="%1$td.%1$tm.%1$tY %1$tH:%1$tM" /> -->
-	</channel-type>
-
 	<channel-type id="coolRuntimeYesterday" advanced="true">
-		<item-type>DateTime</item-type>
+		<item-type>Number:Time</item-type>
 		<label>Cooling time ON yesterday</label>
-		<description>Elapsed time spent cooling yesterday.</description>
-		<state readOnly="true"  />
-		<!-- <state readOnly="true" pattern="%1$td.%1$tm.%1$tY %1$tH:%1$tM" /> -->
+		<description>Elapsed time spent cooling yesterday in minutes.</description>
+        <state readOnly="true" pattern="%d %unit%"/>
 	</channel-type>
 
 </thing:thing-descriptions>
