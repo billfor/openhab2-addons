@@ -30,32 +30,35 @@ public class RadioThermostatBindingConstants {
     private static final String BINDING_ID = "radiothermostat";
 
     // List of all Thing Type UIDs
-    public static final ThingTypeUID THING_TYPE_RADIOTHERMOSTAT = new ThingTypeUID(BINDING_ID, "radiothermostat");
-    public final static Set<ThingTypeUID> SUPPORTED_THING_TYPES = Collections.singleton(THING_TYPE_RADIOTHERMOSTAT);
+    public static final ThingTypeUID THING_TYPE_RADIOTHERMOSTAT = new ThingTypeUID(BINDING_ID, "thermostat");
+    public static final Set<ThingTypeUID> SUPPORTED_THING_TYPES = Collections.singleton(THING_TYPE_RADIOTHERMOSTAT);
 
     // List or properties
     public static final String PROPERTY_API = "api";
     public static final String PROPERTY_FIRMWARE = "firmwareVersion";
     public static final String PROPERTY_NAME = "name";
     public static final String PROPERTY_MODEL = "model";
-    public final static String PROPERTY_UUID = "uuid";
-    public final static String PROPERTY_IP = "ip";
+    public static final String PROPERTY_UUID = "uuid";
+    public static final String PROPERTY_IP = "ip";
 
     // List of all Channel ids
-    public final static String CHANNEL_TEMPERATURE = "temperature";
-    public final static String CHANNEL_FAN = "fan";
-    public final static String CHANNEL_HOLD = "hold";
-    public final static String CHANNEL_MODE = "mode";
+    public static final String CHANNEL_TEMPERATURE = "temperature";
+    public static final String CHANNEL_FAN = "fan";
+    public static final String CHANNEL_HOLD = "hold";
+    public static final String CHANNEL_MODE = "mode";
 
-    public final static String CHANNEL_HEATING_SETPOINT = "heatingSetpoint";
-    public final static String CHANNEL_COOLING_SETPOINT = "coolingSetpoint";
-    public final static String CHANNEL_SYSTEM_STATE = "systemState";
+    public static final String CHANNEL_HEATING_SETPOINT = "heatingSetpoint";
+    public static final String CHANNEL_COOLING_SETPOINT = "coolingSetpoint";
+    public static final String CHANNEL_SYSTEM_STATE = "systemState";
 
-    public final static String CHANNEL_HEAT_RUNTIME_YESTERDAY = "heatRuntimeYesterday";
-    public final static String CHANNEL_COOL_RUNTIME_YESTERDAY = "coolRuntimeYesterday";
+    public static final String CHANNEL_HEAT_RUNTIME_YESTERDAY = "heatRuntimeYesterday";
+    public static final String CHANNEL_COOL_RUNTIME_YESTERDAY = "coolRuntimeYesterday";
 
-    public final static String CHANNEL_FAN_NUMBER = "fanNumber";
-    public final static String CHANNEL_MODE_NUMBER = "modeNumber";
-    public final static String CHANNEL_FAN_STATE = "fanState";
-    public final static String CHANNEL_MODE_STATE = "modeState";
+    public static final String CHANNEL_FAN_NUMBER = "fanNumber";
+    public static final String CHANNEL_MODE_NUMBER = "modeNumber";
+    public static final String CHANNEL_FAN_STATE = "fanState";
+    public static final String CHANNEL_MODE_STATE = "modeState";
+
+    public static final String CHANNEL_COMMAND = "command";
+
 }

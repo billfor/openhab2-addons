@@ -21,5 +21,5 @@ package org.openhab.binding.radiothermostat.internal;
 public class RadioThermostatConfiguration {
     public String ip;
     public Integer refresh;
-    public boolean discover;
+    // public boolean discover;
 }

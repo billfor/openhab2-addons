@@ -5,11 +5,11 @@
 	xsi:schemaLocation="https://openhab.org/schemas/thing-description/v1.0.0 https://openhab.org/schemas/thing-description-1.0.0.xsd">
 
 	<!-- Thermostat Thing Type -->
-	<thing-type id="radiothermostat">
+	<thing-type id="thermostat">
 		<label>RadioThermostat</label>
 		<description>RadioThermostat Thermostat</description>
 
-        <channels>
+	<channels>
             <channel id="temperature" typeId="temperature" />
             <channel id="heatingSetpoint" typeId="heatingSetpoint" />
             <channel id="coolingSetpoint" typeId="coolingSetpoint" />
@@ -22,14 +22,14 @@
             <channel id="fanState" typeId="fanState" />			<!-- readonly. actual state -->
             
             <channel id="modeNumber" typeId="modeNumber" />  	<!--  mode as a number -->
-            <channel id="fanNumber" typeId="fanNumber" /> 		<!--  mode as a number -->
-            
+            <channel id="fanNumber" typeId="fanNumber" /> 		<!--  fan as a number -->
+                        
             <channel id="lastUpdate" typeId="lastUpdate" />
             
-            <channel id="heatRuntimeToday" typeId="heatRuntimeToday" />
             <channel id="heatRuntimeYesterday" typeId="heatRuntimeYesterday" />
-            <channel id="coolRuntimeToday" typeId="coolRuntimeToday" />
             <channel id="coolRuntimeYesterday" typeId="coolRuntimeYesterday" />
+            
+            <channel id="command" typeId="command" />            
             
         </channels>
         
@@ -67,6 +67,8 @@
             </options>
         </state>
     </channel-type>
+    
+    
 
 	<channel-type id="hold">
 		<item-type>Switch</item-type>
@@ -113,6 +115,12 @@
         <label>Fan number.</label>
         <description>Fan as an integer</description>
     </channel-type>    
+    
+    <channel-type id="hold">
+        <item-type>Switch</item-type>
+        <label>Hold Setting</label>
+        <description>Hold on or off.</description>
+    </channel-type>
 
     <channel-type id="heatingSetpoint">
         <item-type>Number:Temperature</item-type>
@@ -148,7 +156,7 @@
 
 	<channel-type id="heatRuntimeYesterday" advanced="true">
 		<item-type>Number:Time</item-type>
-		<label>Heatime time ON yesterday</label>
+		<label>Heating time ON yesterday</label>
 		<description>Elapsed time spent heating yesterday in minutes.</description>
         <state readOnly="true" pattern="%d %unit%"/>
 	</channel-type>
@@ -159,5 +167,11 @@
 		<description>Elapsed time spent cooling yesterday in minutes.</description>
         <state readOnly="true" pattern="%d %unit%"/>
 	</channel-type>
+
+    <channel-type id="command" advanced="true">
+        <item-type>String</item-type>
+        <label>Command string (json)</label>
+        <description>For composite settings.</description>
+    </channel-type>
 
 </thing:thing-descriptions>

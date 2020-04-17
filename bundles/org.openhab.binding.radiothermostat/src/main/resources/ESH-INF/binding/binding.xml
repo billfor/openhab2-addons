@@ -4,7 +4,7 @@
 	xsi:schemaLocation="https://openhab.org/schemas/binding/v1.0.0 https://openhab.org/schemas/binding-1.0.0.xsd">
 
 	<name>RadioThermostat Binding</name>
-	<description>This is the binding for RadioThermostat.</description>
+	<description>This is the binding for the RadioThermostat.</description>
 	<author>Bill Forsyth</author>
 
 </binding:binding>

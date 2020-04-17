@@ -79,15 +79,14 @@ public class RadioThermostatHandler extends BaseThingHandler {
     private RadioThermostatTstatDatalog datalog = new RadioThermostatTstatDatalog();
 
     private static final int TIMEOUT_SECONDS = 3;
-    // TODO: use this
-    private static final int RETRY_ATTEMPTS = 3;
+    private static final int RETRY_ATTEMPTS = 2;
 
-    private static final int UPDATE_AFTER_COMMAND_SECONDS = 2;
+    private static final int UPDATE_AFTER_INIT_SECONDS = 20;
     private static final int INITIAL_UPDATE_DELAY = 30;
     private static final int HISTORY_CHECK_GRACE_PERIOD = 600;
 
     private @Nullable RadioThermostatConfiguration config;
-    // TODO: put daily runtime GET in job
+    // TODO: put daily runtime GET in job, and maybe the property update
     private @Nullable Future<?> updatesTask, historyTask, propertyTask = null;
 
     private @Nullable String baseURL;
@@ -106,6 +105,7 @@ public class RadioThermostatHandler extends BaseThingHandler {
 
     @Override
     public void handleCommand(ChannelUID channelUID, Command command) {
+        int value;
         logger.warn("Received command {} for thing '{}' on channel {}", command, thing.getUID().getAsString(),
                 channelUID.getId());
 
@@ -114,61 +114,98 @@ public class RadioThermostatHandler extends BaseThingHandler {
             return;
         }
 
-        stopUpdateTasks();
-
         if (command instanceof RefreshType) {
             logger.debug("Refresh command requested for {}", channelUID);
-            startUpdatesTask(UPDATE_AFTER_COMMAND_SECONDS);
+            if (tstat.getTemp() != 0) {
+                startUpdatesTask(0); // ignore if we have not ever received update. Since the single update gets
+                                     // everything.
+            } else {
+                logger.trace("Ignoring initial refresh.");
+                startUpdatesTask(UPDATE_AFTER_INIT_SECONDS);
+            }
         } else {
+            // stopUpdateTasks();
             if (channelUID.getId().equals(CHANNEL_HEATING_SETPOINT)) {
                 QuantityType<Temperature> quantity = commandToQuantityType(command, unitSystem);
-                int value = quantityToRoundedTemperature(quantity, unitSystem).intValue();
+                value = quantityToRoundedTemperature(quantity, unitSystem).intValue();
+                updateState(CHANNEL_HEATING_SETPOINT, new QuantityType<Temperature>(value, unitSystem));
                 logger.debug("Setting heating setpoint to {}", value);
                 postData("t_heat", value);
             } else if (channelUID.getId().equals(CHANNEL_COOLING_SETPOINT)) {
                 QuantityType<Temperature> quantity = commandToQuantityType(command, unitSystem);
-                int value = quantityToRoundedTemperature(quantity, unitSystem).intValue();
+                value = quantityToRoundedTemperature(quantity, unitSystem).intValue();
+                updateState(CHANNEL_COOLING_SETPOINT, new QuantityType<Temperature>(value, unitSystem));
                 logger.debug("Setting cooling setpoint to {}", value);
                 postData("t_cool", value);
             } else if (channelUID.getId().equals(CHANNEL_MODE)) {
-                int value = RadioThermostatTstat.Tmode.valueOf(((StringType) command).toString()).ordinal();
+                value = RadioThermostatTstat.Tmode.valueOf(((StringType) command).toString()).ordinal();
                 logger.debug("Set mode to {}", value);
                 postData("tmode", value);
-            } else if (channelUID.getId().equals(CHANNEL_FAN)) {
-                int value = RadioThermostatTstat.Fmode.valueOf(((StringType) command).toString()).ordinal();
-                logger.debug("Set fmode to {}", value);
-                postData("fmode", value);
             } else if (channelUID.getId().equals(CHANNEL_HOLD)) {
-                int value = (((OnOffType) command).equals(OnOffType.ON)) ? 1 : 0;
+                value = (((OnOffType) command).equals(OnOffType.ON)) ? 1 : 0;
                 logger.debug("Set hold to {}", value);
                 postData("hold", value);
+            } else if (channelUID.getId().equals(CHANNEL_MODE_NUMBER)) {
+                logger.debug("update mode");
+                value = ((DecimalType) command).intValue();
+                logger.debug("Set mode to {}", value);
+                updateState(CHANNEL_MODE_NUMBER, (DecimalType) command);
+                postData("tmode", value);
+            } else if (channelUID.getId().equals(CHANNEL_FAN)) {
+                value = RadioThermostatTstat.Fmode.valueOf(((StringType) command).toString()).ordinal();
+                logger.debug("Set fmode to {}", value);
+                postData("fmode", value);
+            } else if (channelUID.getId().equals(CHANNEL_COMMAND)) {
+                String jsonString = ((StringType) command).toString();
+                logger.debug("Sending command: {}", jsonString);
+                postData(jsonString, -1);
+            } else {
+                logger.debug("Can not handle command '{}'", command);
             }
         }
+
+        // startUpdatesTask(UPDATE_AFTER_COMMAND_SECONDS);
     }
 
     private void postData(String jsonElement, int value) {
         String requestString = baseURL + "/tstat";
-        try {
-            Request request = httpClient.newRequest(requestString)
-                    .content(new StringContentProvider("{\"" + jsonElement + "\":" + String.valueOf(value) + "}"),
-                            "application/json")
-                    .timeout(TIMEOUT_SECONDS, TimeUnit.SECONDS).method(HttpMethod.POST);
-            logger.trace("sendRequest: requesting {}", request.getURI());
-            ContentResponse response = request.send();
-            logger.trace("Response code {}", response.getStatus());
-            if (response.getStatus() != 200) {
-                logger.debug("Error communicating with thermostat. Error Code: " + response.getStatus());
-                goOffline(ThingStatusDetail.COMMUNICATION_ERROR, "Bad response code: " + response.getStatus());
-            } else {
-                // String content = response.getContentAsString();
-                JsonObject jsonObject = new JsonParser().parse(response.getContentAsString()).getAsJsonObject();
-                logger.trace("sendRequest: response {}", jsonObject);
+        String json;
+        if (value == -1) {
+            json = jsonElement;
+        } else {
+            json = "{\"" + jsonElement + "\":" + String.valueOf(value) + "}";
+        }
+        for (int i = 0; i < RETRY_ATTEMPTS; i++) {
+            try {
+                Request request = httpClient.newRequest(requestString)
+                        .content(new StringContentProvider(json), "application/json")
+                        .timeout(TIMEOUT_SECONDS, TimeUnit.SECONDS).method(HttpMethod.POST);
+                logger.trace("sendRequest: sending {} json {} value {}", request.getURI(), jsonElement, value);
+                ContentResponse response = request.send();
+                logger.trace("Response code {}", response.getStatus());
+                if (response.getStatus() != 200) {
+                    logger.debug("Error communicating with thermostat. Error Code: " + response.getStatus());
+                    goOffline(ThingStatusDetail.COMMUNICATION_ERROR, "Bad response code: " + response.getStatus());
+                    return;
+                } else {
+                    // String content = response.getContentAsString();
+                    JsonObject jsonObject = new JsonParser().parse(response.getContentAsString()).getAsJsonObject();
+                    logger.trace("sendRequest: response {}", jsonObject);
+                    return;
+                }
+            } catch (TimeoutException e) {
+                logger.debug("Timeout", e);
+                // goOffline(ThingStatusDetail.COMMUNICATION_ERROR, e.getMessage());
+            } catch (InterruptedException | ExecutionException e) {
+                logger.debug("Unable to fetch info data", e);
+                goOffline(ThingStatusDetail.COMMUNICATION_ERROR, e.getMessage());
+                return;
+            } catch (JsonSyntaxException e) {
+                logger.info("Invalid json sent: ", e);
                 return;
             }
-        } catch (InterruptedException | TimeoutException | ExecutionException e) {
-            logger.debug("Unable to fetch info data", e);
-            goOffline(ThingStatusDetail.COMMUNICATION_ERROR, e.getMessage());
         }
+        goOffline(ThingStatusDetail.COMMUNICATION_ERROR, "Timed out after retries.");
     }
 
     @SuppressWarnings("null")
@@ -186,19 +223,18 @@ public class RadioThermostatHandler extends BaseThingHandler {
             }
             refresh = config.refresh;
         } catch (Exception e) {
-            logger.debug("Could not conntect to URL  {}", baseURL, e);
+            logger.debug("Could not connect to URL  {}", baseURL, e);
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, e.getMessage());
         }
 
         if (config.ip == null) {
             config.ip = getThing().getProperties().get(PROPERTY_IP); // it must have been autodiscovered
-            // updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR,"Hostname/IP address or discovery
-            // must be set");
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR,
+                    "Hostname/IP address or discovery must be set");
         }
 
         if (config.refresh < 60) {
             config.refresh = 60;
-            // updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "Refresh is too low.");
         }
 
         baseURL = "http://" + config.ip;
@@ -234,28 +270,34 @@ public class RadioThermostatHandler extends BaseThingHandler {
             logger.debug("Error fetching init data {}", baseURL, e);
             updateStatus(ThingStatus.UNKNOWN);
         }
+        startUpdatesTask(UPDATE_AFTER_INIT_SECONDS);
         logger.debug("Finished initializing!");
     }
 
     private String getData(String path) throws RadioThermostatCommunicationException {
         String content;
-        try {
-            String requestString = baseURL + path;
-            logger.trace("Requesting {}", requestString);
+        for (int i = 0; i < RETRY_ATTEMPTS; i++) {
+            try {
+                String requestString = baseURL + path;
+                logger.trace("Requesting {}", requestString);
 
-            ContentResponse response = httpClient.newRequest(requestString).timeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
-                    .send();
-            logger.trace("Response code {}", response.getStatus());
-            if (response.getStatus() != 200) {
-                throw new RadioThermostatCommunicationException(
-                        "Error communicating with thermostat. Error Code: " + response.getStatus());
+                ContentResponse response = httpClient.newRequest(requestString)
+                        .timeout(TIMEOUT_SECONDS, TimeUnit.SECONDS).send();
+                logger.trace("Response code {}", response.getStatus());
+                if (response.getStatus() != 200) {
+                    throw new RadioThermostatCommunicationException(
+                            "Error communicating with thermostat. Error Code: " + response.getStatus());
+                }
+                content = response.getContentAsString();
+                logger.trace("sendRequest: response {}", content);
+                return content;
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RadioThermostatCommunicationException(e);
+            } catch (TimeoutException e) {
+                logger.debug("Timeout", e);
             }
-            content = response.getContentAsString();
-            logger.trace("sendRequest: response {}", content);
-            return content;
-        } catch (InterruptedException | TimeoutException | ExecutionException e) {
-            throw new RadioThermostatCommunicationException(e);
         }
+        throw new RadioThermostatCommunicationException("All retries timed out.");
     }
 
     private void updateData() {

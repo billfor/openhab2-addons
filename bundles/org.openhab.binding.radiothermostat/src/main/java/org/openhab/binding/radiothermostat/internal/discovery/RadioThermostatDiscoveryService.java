@@ -15,7 +15,6 @@ import java.net.UnknownHostException;
 import java.util.Enumeration;
 import java.util.Scanner;
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 
 import org.eclipse.smarthome.config.discovery.AbstractDiscoveryService;
 import org.eclipse.smarthome.config.discovery.DiscoveryResult;
@@ -51,15 +50,15 @@ public class RadioThermostatDiscoveryService extends AbstractDiscoveryService {
     private ScheduledFuture<?> scheduledFuture = null;
 
     public RadioThermostatDiscoveryService() {
-        super(RadioThermostatBindingConstants.SUPPORTED_THING_TYPES, 30, true);
+        super(RadioThermostatBindingConstants.SUPPORTED_THING_TYPES, 30, false);
     }
 
     @Override
     protected void startBackgroundDiscovery() {
         logger.debug("Starting Background Scan");
         stopBackgroundDiscovery();
-        scheduledFuture = scheduler.scheduleAtFixedRate(this::doRunRun, 0, BACKGROUND_SCAN_INTERVAL_SECONDS,
-                TimeUnit.SECONDS);
+        // scheduledFuture = scheduler.scheduleAtFixedRate(this::doRunRun, 0, BACKGROUND_SCAN_INTERVAL_SECONDS,
+        // TimeUnit.SECONDS);
     }
 
     @Override
