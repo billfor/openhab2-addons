@@ -30,7 +30,7 @@
 				<channel id="coolRuntimeYesterday" typeId="coolRuntimeYesterday" />
 	
 				<channel id="command" typeId="command" />            
-	            <channel id="reboot" typeId="reboot" />            
+				<channel id="reboot" typeId="reboot" />            
 		</channels>
 
 		<properties>
@@ -172,11 +172,9 @@
 		<description>For composite settings.</description>
 	</channel-type>
 	
-    <channel-type id="reboot" advanced="true">
-        <item-type>Switch</item-type>
-        <label>Reboot</label>
-        <description>Reboot the thermostat.</description>
-    </channel-type>
-	
-
+	<channel-type id="reboot" advanced="true">
+		<item-type>Switch</item-type>
+		<label>Reboot</label>
+		<description>Reboot the thermostat.</description>
+	</channel-type>
 </thing:thing-descriptions>

@@ -167,7 +167,6 @@ public class RadioThermostatHandler extends BaseThingHandler {
                 logger.debug("Can not handle command '{}'", command);
             }
         }
-
         // startUpdatesTask(UPDATE_AFTER_COMMAND_SECONDS);
     }
 
@@ -200,7 +199,7 @@ public class RadioThermostatHandler extends BaseThingHandler {
                 ContentResponse response = request.send();
                 logger.trace("Response code {}", response.getStatus());
                 if (response.getStatus() != 200) {
-                    logger.debug("Error communicating with thermostat. Error Code: " + response.getStatus());
+                    logger.debug("Error communicating with thermostat. Error Code: {} ", response.getStatus());
                     goOffline(ThingStatusDetail.COMMUNICATION_ERROR, "Bad response code: " + response.getStatus());
                     return;
                 } else {

@@ -1,3 +1,15 @@
+/**
+ * Copyright (c) 2010-2020 Contributors to the openHAB project
+ *
+ * See the NOTICE file(s) distributed with this work for additional
+ * information.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
 package org.openhab.binding.radiothermostat.internal.discovery;
 
 import java.io.IOException;
@@ -33,10 +45,10 @@ import com.google.gson.JsonParser;
 /**
  * The {@link RadioThermostatDiscoveryService} is responsible for discovery of
  * RadioThermostats on the local network
- *
- * @author Bill Forsyth - Modified for the RadioThermostat's peculiar discovery mode
+ * 
  * @author William Welliver - Initial contribution
  * @author Dan Cunningham - Refactoring and Improvements
+ * @author Bill Forsyth - Modified for the RadioThermostat's peculiar discovery mode
  */
 
 @Component(service = DiscoveryService.class, configurationPid = "discovery.radiothermostat")
@@ -208,7 +220,7 @@ public class RadioThermostatDiscoveryService extends AbstractDiscoveryService {
                         url = value;
                         ip = new URL(value).getHost();
                     } catch (MalformedURLException e) {
-                        logger.debug("Malfored URL {}", e);
+                        logger.debug("Malfored URL: ", e);
                     }
                     break;
                 default:
@@ -230,7 +242,7 @@ public class RadioThermostatDiscoveryService extends AbstractDiscoveryService {
         try {
             sysinfo = HttpUtil.executeUrl("GET", url, 5000);
         } catch (IOException e) {
-            logger.debug("Cannot get system info from thermostat {} {}", ip, e);
+            logger.debug("Cannot get system info from thermostat {}:", ip, e);
             sysinfo = null;
         }
 
@@ -240,13 +252,13 @@ public class RadioThermostatDiscoveryService extends AbstractDiscoveryService {
         try {
             content = new JsonParser().parse(HttpUtil.executeUrl("GET", url + "name", 5000)).getAsJsonObject();
         } catch (IOException e) {
-            logger.debug("Cannot get name from thermostat {} {}", ip, e);
+            logger.debug("Cannot get name from thermostat {}:", ip, e);
             sysinfo = null;
         }
 
         name = content.get("name").getAsString();
 
-        logger.trace("Discovery returned: {} uuid {}", sysinfo, uuid, name);
+        logger.trace("Discovery returned sysinfo: {} uuid: {}  name: {}", sysinfo, uuid, name);
 
         ThingUID thingUid = new ThingUID(RadioThermostatBindingConstants.THING_TYPE_RADIOTHERMOSTAT, uuid);
 
