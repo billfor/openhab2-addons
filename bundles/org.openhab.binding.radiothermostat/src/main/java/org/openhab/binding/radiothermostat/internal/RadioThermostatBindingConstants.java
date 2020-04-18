@@ -59,6 +59,7 @@ public class RadioThermostatBindingConstants {
     public static final String CHANNEL_FAN_STATE = "fanState";
     public static final String CHANNEL_MODE_STATE = "modeState";
 
+    public static final String CHANNEL_LASTUPDATE = "lastupdate";
     public static final String CHANNEL_COMMAND = "command";
-
+    public static final String CHANNEL_REBOOT = "reboot";
 }

@@ -35,6 +35,7 @@ import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.util.StringContentProvider;
 import org.eclipse.jetty.http.HttpMethod;
+import org.eclipse.smarthome.core.library.types.DateTimeType;
 import org.eclipse.smarthome.core.library.types.DecimalType;
 import org.eclipse.smarthome.core.library.types.OnOffType;
 import org.eclipse.smarthome.core.library.types.QuantityType;
@@ -159,6 +160,9 @@ public class RadioThermostatHandler extends BaseThingHandler {
                 String jsonString = ((StringType) command).toString();
                 logger.debug("Sending command: {}", jsonString);
                 postData(jsonString, -1);
+            } else if (channelUID.getId().equals(CHANNEL_REBOOT)) {
+                logger.debug("Rebooting");
+                postData("reboot", 0);
             } else {
                 logger.debug("Can not handle command '{}'", command);
             }
@@ -168,13 +172,25 @@ public class RadioThermostatHandler extends BaseThingHandler {
     }
 
     private void postData(String jsonElement, int value) {
-        String requestString = baseURL + "/tstat";
+        String requestString;
         String json;
+
+        if (jsonElement == "reboot") {
+            requestString = baseURL + "/sys/command";
+        } else {
+            requestString = baseURL + "/tstat";
+        }
+
         if (value == -1) {
             json = jsonElement;
         } else {
-            json = "{\"" + jsonElement + "\":" + String.valueOf(value) + "}";
+            if (jsonElement == "reboot") {
+                json = "{\"command\":\"reboot\"}";
+            } else {
+                json = "{\"" + jsonElement + "\":" + String.valueOf(value) + "}";
+            }
         }
+
         for (int i = 0; i < RETRY_ATTEMPTS; i++) {
             try {
                 Request request = httpClient.newRequest(requestString)
@@ -328,6 +344,8 @@ public class RadioThermostatHandler extends BaseThingHandler {
 
             updateState(CHANNEL_FAN_STATE, new DecimalType(tstat.getFstate()));
             updateState(CHANNEL_MODE_STATE, new DecimalType(tstat.getTstate()));
+
+            updateState(CHANNEL_LASTUPDATE, new DateTimeType());
 
             // Only get the runtime history once a day, inline with the other calls so we can sleep, otherwise
             // thermostat can timeout.
