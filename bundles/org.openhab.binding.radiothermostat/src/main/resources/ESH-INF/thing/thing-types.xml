@@ -13,7 +13,8 @@
 				<channel id="temperature" typeId="temperature" />
 				<channel id="heatingSetpoint" typeId="heatingSetpoint" />
 				<channel id="coolingSetpoint" typeId="coolingSetpoint" />
-	
+				<channel id="setpoint" typeId="setpoint" />
+				
 				<channel id="mode" typeId="mode" /> 				<!--  string channel -->
 				<channel id="fan" typeId="fan" />					<!--  string channel -->
 				<channel id="hold" typeId="hold" />					<!--  switch -->
@@ -120,7 +121,15 @@
 		<description>Hold on or off.</description>
 	</channel-type>
 
-	<channel-type id="heatingSetpoint">
+	<channel-type id="setpoint">
+		<item-type>Number:Temperature</item-type>
+		<label>Current Setpoint</label>
+		<description>Current Setpoint (Heating or Cooling)</description>
+		<category>Temperature</category>
+		<state readOnly="false" pattern="%.1f %unit%" min="0" max="80" step="0.5" />
+	</channel-type>
+
+	<channel-type id="heatingSetpoint" advanced="true">
 		<item-type>Number:Temperature</item-type>
 		<label>Heating Setpoint</label>
 		<description>Heating Setpoint</description>
@@ -128,7 +137,7 @@
 		<state readOnly="false" pattern="%.1f %unit%" min="0" max="80" step="0.5" />
 	</channel-type>
 
-	<channel-type id="coolingSetpoint">
+	<channel-type id="coolingSetpoint" advanced="true">
 		<item-type>Number:Temperature</item-type>
 		<label>Cooling Setpoint</label>
 		<description>Cooling Setpoint</description>

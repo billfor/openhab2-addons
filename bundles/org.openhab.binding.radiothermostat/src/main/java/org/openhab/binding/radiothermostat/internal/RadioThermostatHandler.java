@@ -80,7 +80,7 @@ public class RadioThermostatHandler extends BaseThingHandler {
     private RadioThermostatTstatDatalog datalog = new RadioThermostatTstatDatalog();
 
     private static final int TIMEOUT_SECONDS = 3;
-    private static final int RETRY_ATTEMPTS = 2;
+    private static final int RETRY_ATTEMPTS = 4;
 
     private static final int UPDATE_AFTER_INIT_SECONDS = 20;
     private static final int INITIAL_UPDATE_DELAY = 30;
@@ -138,6 +138,23 @@ public class RadioThermostatHandler extends BaseThingHandler {
                 updateState(CHANNEL_COOLING_SETPOINT, new QuantityType<Temperature>(value, unitSystem));
                 logger.debug("Setting cooling setpoint to {}", value);
                 postData("t_cool", value);
+            } else if (channelUID.getId().equals(CHANNEL_SETPOINT)) {
+                QuantityType<Temperature> quantity = commandToQuantityType(command, unitSystem);
+                value = quantityToRoundedTemperature(quantity, unitSystem).intValue();
+                int mode = tstat.getModeNumber();
+                switch (mode) {
+                    case 1:
+                        updateState(CHANNEL_HEATING_SETPOINT, new QuantityType<Temperature>(value, unitSystem));
+                        logger.debug("Setting heating setpoint to {}", value);
+                        postData("t_heat", value);
+                        break;
+                    case 2:
+                        updateState(CHANNEL_COOLING_SETPOINT, new QuantityType<Temperature>(value, unitSystem));
+                        logger.debug("Setting cooling setpoint to {}", value);
+                        postData("t_cool", value);
+                        break;
+                }
+                updateState(CHANNEL_SETPOINT, new QuantityType<Temperature>(value, unitSystem));
             } else if (channelUID.getId().equals(CHANNEL_MODE)) {
                 value = RadioThermostatTstat.Tmode.valueOf(((StringType) command).toString()).ordinal();
                 logger.debug("Set mode to {}", value);
@@ -339,7 +356,29 @@ public class RadioThermostatHandler extends BaseThingHandler {
             updateState(CHANNEL_FAN, new StringType(tstat.getFan()));
             updateState(CHANNEL_FAN_NUMBER, new DecimalType(tstat.getFanNumber()));
             updateState(CHANNEL_MODE, new StringType(tstat.getMode()));
-            updateState(CHANNEL_MODE_NUMBER, new DecimalType(tstat.getModeNumber()));
+
+            int mode = tstat.getModeNumber();
+            updateState(CHANNEL_MODE_NUMBER, new DecimalType(mode));
+            switch (mode) {
+                case 0:
+                    updateState(CHANNEL_SETPOINT, UnDefType.UNDEF);
+                    logger.trace("Thermostat is off or unitialized..");
+                    break;
+                case 1:
+                    updateState(CHANNEL_SETPOINT,
+                            (tstat.getHeatingSetpoint() != null)
+                                    ? new QuantityType<Temperature>(tstat.getHeatingSetpoint(), unitSystem)
+                                    : UnDefType.UNDEF);
+                    logger.trace("Setting heat setpoint.");
+                    break;
+                case 2:
+                    updateState(CHANNEL_SETPOINT,
+                            (tstat.getCoolingSetpoint() != null)
+                                    ? new QuantityType<Temperature>(tstat.getCoolingSetpoint(), unitSystem)
+                                    : UnDefType.UNDEF);
+                    logger.trace("Setting cool setpoint.");
+                    break;
+            }
 
             updateState(CHANNEL_FAN_STATE, new DecimalType(tstat.getFstate()));
             updateState(CHANNEL_MODE_STATE, new DecimalType(tstat.getTstate()));

@@ -49,6 +49,7 @@ public class RadioThermostatBindingConstants {
 
     public static final String CHANNEL_HEATING_SETPOINT = "heatingSetpoint";
     public static final String CHANNEL_COOLING_SETPOINT = "coolingSetpoint";
+    public static final String CHANNEL_SETPOINT = "setpoint";
     public static final String CHANNEL_SYSTEM_STATE = "systemState";
 
     public static final String CHANNEL_HEAT_RUNTIME_YESTERDAY = "heatRuntimeYesterday";
