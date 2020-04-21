@@ -50,8 +50,6 @@ import org.eclipse.smarthome.core.thing.binding.BaseThingHandler;
 import org.eclipse.smarthome.core.types.Command;
 import org.eclipse.smarthome.core.types.RefreshType;
 import org.eclipse.smarthome.core.types.UnDefType;
-import org.joda.time.DateTime;
-import org.joda.time.Interval;
 import org.openhab.binding.radiothermostat.internal.data.RadioThermostatTstat;
 import org.openhab.binding.radiothermostat.internal.data.RadioThermostatTstatDatalog;
 import org.slf4j.Logger;
@@ -333,12 +331,13 @@ public class RadioThermostatHandler extends BaseThingHandler {
     }
 
     private void updateData() {
+        Future<?> localUpdatesTask = updatesTask;
+        if (!isFutureValid(localUpdatesTask)) {
+            return;
+        }
+
         try {
-            Future<?> localUpdatesTask = updatesTask;
             String response = getData("/tstat");
-            if (!isFutureValid(localUpdatesTask)) {
-                return;
-            }
 
             tstat = gson.fromJson(response, RadioThermostatTstat.class);
             logger.debug("Got mode {} and fan {}", tstat.getMode(), tstat.getFan());
@@ -385,20 +384,37 @@ public class RadioThermostatHandler extends BaseThingHandler {
 
             updateState(CHANNEL_LASTUPDATE, new DateTimeType());
 
-            // Only get the runtime history once a day, inline with the other calls so we can sleep, otherwise
-            // thermostat can timeout.
-            DateTime startOfDay = DateTime.now().withTimeAtStartOfDay().plusSeconds(HISTORY_CHECK_GRACE_PERIOD);
-            if (new Interval(startOfDay, startOfDay.plusSeconds(refresh)).containsNow()) {
-                logger.trace("Fetch runlogs");
-            }
+            /*
+             * // Only get the runtime history once a day, inline with the other calls so we can sleep, otherwise
+             * // thermostat can timeout.
+             * DateTime startOfDay = DateTime.now().withTimeAtStartOfDay().plusSeconds(HISTORY_CHECK_GRACE_PERIOD);
+             * if (new Interval(startOfDay, startOfDay.plusSeconds(refresh)).containsNow()) {
+             * logger.trace("Fetch runlogs");
+             * }
+             */
+            goOnline();
+        } catch (RadioThermostatCommunicationException | JsonSyntaxException e) {
+            logger.debug("Unable to fetch data", e);
+            goOffline(ThingStatusDetail.COMMUNICATION_ERROR, e.getMessage());
+        }
+    }
 
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                logger.trace("Sleep interrupted: {}", e.getMessage());
-            }
+    private void updateHistory() {
+        Future<?> localUpdatesTask = historyTask;
+        if (!isFutureValid(localUpdatesTask)) {
+            return;
+        }
+        try {
+            String response = getData("/tstat/datalog");
 
-            response = getData("/tstat/datalog");
+            /*
+             * try {
+             * Thread.sleep(1000);
+             * } catch (InterruptedException e) {
+             * logger.trace("Sleep interrupted: {}", e.getMessage());
+             * }
+             */
+
             logger.debug("datalog {}", response);
 
             datalog = gson.fromJson(response, RadioThermostatTstatDatalog.class);
@@ -420,6 +436,7 @@ public class RadioThermostatHandler extends BaseThingHandler {
     private synchronized void startUpdatesTask(int initialDelay) {
         stopUpdateTasks();
         updatesTask = scheduler.scheduleWithFixedDelay(this::updateData, initialDelay, refresh, TimeUnit.SECONDS);
+        historyTask = scheduler.scheduleWithFixedDelay(this::updateHistory, 5, 60, TimeUnit.MINUTES);
     }
 
     @SuppressWarnings("null")
@@ -428,6 +445,12 @@ public class RadioThermostatHandler extends BaseThingHandler {
         if (isFutureValid(localUpdatesTask)) {
             localUpdatesTask.cancel(false);
         }
+
+        Future<?> localUpdatesTask2 = historyTask;
+        if (isFutureValid(localUpdatesTask2)) {
+            localUpdatesTask2.cancel(false);
+        }
+
     }
 
     private boolean isFutureValid(@Nullable Future<?> future) {
