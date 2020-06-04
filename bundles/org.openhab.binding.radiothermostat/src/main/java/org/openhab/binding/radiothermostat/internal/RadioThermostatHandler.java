@@ -82,7 +82,6 @@ public class RadioThermostatHandler extends BaseThingHandler {
 
     private static final int UPDATE_AFTER_INIT_SECONDS = 20;
     private static final int INITIAL_UPDATE_DELAY = 30;
-    private static final int HISTORY_CHECK_GRACE_PERIOD = 600;
 
     private @Nullable RadioThermostatConfiguration config;
     // TODO: put daily runtime GET in job, and maybe the property update
@@ -340,7 +339,7 @@ public class RadioThermostatHandler extends BaseThingHandler {
             String response = getData("/tstat");
 
             tstat = gson.fromJson(response, RadioThermostatTstat.class);
-            logger.debug("Got mode {} and fan {}", tstat.getMode(), tstat.getFan());
+            logger.trace("Got mode {} and fan {}", tstat.getMode(), tstat.getFan());
 
             updateState(CHANNEL_TEMPERATURE, new QuantityType<Temperature>(tstat.getTemp(), unitSystem));
             updateState(CHANNEL_HEATING_SETPOINT,
@@ -394,7 +393,7 @@ public class RadioThermostatHandler extends BaseThingHandler {
              */
             goOnline();
         } catch (RadioThermostatCommunicationException | JsonSyntaxException e) {
-            logger.debug("Unable to fetch data", e);
+            logger.debug("Unable to fetch data from {}", baseURL, e);
             goOffline(ThingStatusDetail.COMMUNICATION_ERROR, e.getMessage());
         }
     }
