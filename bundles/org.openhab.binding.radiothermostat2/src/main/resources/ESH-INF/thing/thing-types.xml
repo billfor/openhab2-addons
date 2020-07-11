@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<thing:thing-descriptions bindingId="radiothermostat"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:thing="https://openhab.org/schemas/thing-description/v1.0.0"
+	xsi:schemaLocation="https://openhab.org/schemas/thing-description/v1.0.0 https://openhab.org/schemas/thing-description-1.0.0.xsd">
+
+	<!-- Thermostat Thing Type -->
+	<thing-type id="thermostat">
+		<label>RadioThermostat</label>
+		<description>RadioThermostat Thermostat</description>
+
+		<channels>
+				<channel id="temperature" typeId="temperature" />
+				<channel id="heatingSetpoint" typeId="heatingSetpoint" />
+				<channel id="coolingSetpoint" typeId="coolingSetpoint" />
+				<channel id="setpoint" typeId="setpoint" />
+				
+				<channel id="mode" typeId="mode" /> 				<!--  string channel -->
+				<channel id="fan" typeId="fan" />					<!--  string channel -->
+				<channel id="hold" typeId="hold" />					<!--  switch -->
+	
+				<channel id="modeState" typeId="modeState" />  		<!-- readonly. actual state -->
+				<channel id="fanState" typeId="fanState" />			<!-- readonly. actual state -->
+	
+				<channel id="modeNumber" typeId="modeNumber" />  	<!--  mode as a number -->
+				<channel id="fanNumber" typeId="fanNumber" /> 		<!--  fan as a number -->
+	
+				<channel id="lastupdate" typeId="lastupdate" />
+	
+				<channel id="heatRuntimeYesterday" typeId="heatRuntimeYesterday" />
+				<channel id="coolRuntimeYesterday" typeId="coolRuntimeYesterday" />
+	
+				<channel id="command" typeId="command" />            
+				<channel id="reboot" typeId="reboot" />            
+		</channels>
+
+		<properties>
+			<property name="ip"></property>
+			<property name="model"></property>
+			<property name="name"></property>
+			<property name="firmwareVersion"></property>
+		</properties>
+		<representation-property>uuid</representation-property>        
+
+		<config-description>
+			<parameter name="ip" type="text" required="true">
+				<label>IP address</label>
+				<description>IP address or hostname of thermostat.</description>
+			</parameter>
+			<parameter name="refresh" type="integer" min="60" required="true">
+				<label>Refresh interval</label>
+				<description>Specifies the refresh interval in seconds.</description>
+				<default>60</default>
+			</parameter>
+		</config-description>
+
+	</thing-type>
+	
+	<channel-type id="fan">
+		<item-type>String</item-type>
+		<label>Fan setting</label>
+		<description>Fan on or off.</description>
+		<state readOnly="false">
+			<options>
+				<option value="auto">Auto</option>
+				<option value="circulate">Auto/Circulate</option> 
+				<option value="on">On</option>
+			</options>
+		</state>
+	</channel-type>
+
+	<channel-type id="hold">
+		<item-type>Switch</item-type>
+		<label>Hold Setting</label>
+		<description>Hold on or off.</description>
+	</channel-type>
+	
+	<channel-type id="mode">
+		<item-type>String</item-type>
+		<label>System Mode</label>
+		<description>System Operating Mode</description>
+		<state readOnly="false">
+			<options>
+				<option value="off">Off</option>
+				<option value="heat">Heat</option>
+				<option value="cool">Cool</option>
+				<option value="auto">Auto</option>
+			</options>
+		</state>
+	</channel-type>
+
+	<channel-type id="fanState" advanced="true">
+		<item-type>Number</item-type>
+		<label>Fan State</label>
+		<description>Actual state of the fan.</description>
+		<state readOnly="true"/>
+	</channel-type>
+
+	<channel-type id="modeState" advanced="true">
+		<item-type>Number</item-type>
+		<label>Mode State</label>
+		<description>Actual mode of the thermostat.</description>
+		<state readOnly="true"/>
+	</channel-type>    
+
+	<channel-type id="modeNumber" advanced="true">
+		<item-type>Number</item-type>
+		<label>Mode number.</label>
+		<description>Mode as an integer</description>
+	</channel-type>
+
+	<channel-type id="fanNumber" advanced="true">
+		<item-type>Number</item-type>
+		<label>Fan number.</label>
+		<description>Fan as an integer</description>
+	</channel-type>    
+
+	<channel-type id="hold">
+		<item-type>Switch</item-type>
+		<label>Hold Setting</label>
+		<description>Hold on or off.</description>
+	</channel-type>
+
+	<channel-type id="setpoint">
+		<item-type>Number:Temperature</item-type>
+		<label>Current Setpoint</label>
+		<description>Current Setpoint (Heating or Cooling)</description>
+		<category>Temperature</category>
+		<state readOnly="false" pattern="%.1f %unit%" min="0" max="80" step="0.5" />
+	</channel-type>
+
+	<channel-type id="heatingSetpoint" advanced="true">
+		<item-type>Number:Temperature</item-type>
+		<label>Heating Setpoint</label>
+		<description>Heating Setpoint</description>
+		<category>Temperature</category>
+		<state readOnly="false" pattern="%.1f %unit%" min="0" max="80" step="0.5" />
+	</channel-type>
+
+	<channel-type id="coolingSetpoint" advanced="true">
+		<item-type>Number:Temperature</item-type>
+		<label>Cooling Setpoint</label>
+		<description>Cooling Setpoint</description>
+		<category>Temperature</category>
+		<state readOnly="false" pattern="%.1f %unit%" min="32" max="95" step="0.5" />
+	</channel-type>
+
+	<channel-type id="temperature">
+		<item-type>Number:Temperature</item-type>
+		<label>Temperature</label>
+		<description>Temperature</description>
+		<category>Temperature</category>
+		<state readOnly="true" pattern="%.1f %unit%">
+		</state>
+	</channel-type>
+
+	<channel-type id="lastupdate" advanced="true">
+		<item-type>DateTime</item-type>
+		<label>Last update</label>
+		<description>Time of last update from the thermostat.</description>
+		<state readOnly="true" pattern="%1$tH:%1$tM" />
+	</channel-type>
+
+	<channel-type id="heatRuntimeYesterday" advanced="true">
+		<item-type>Number:Time</item-type>
+		<label>Heating time ON yesterday</label>
+		<description>Elapsed time spent heating yesterday in minutes.</description>
+		<state readOnly="true" pattern="%d %unit%"/>
+	</channel-type>
+	
+	<channel-type id="coolRuntimeYesterday" advanced="true">
+		<item-type>Number:Time</item-type>
+		<label>Cooling time ON yesterday</label>
+		<description>Elapsed time spent cooling yesterday in minutes.</description>
+		<state readOnly="true" pattern="%d %unit%"/>
+	</channel-type>
+
+	<channel-type id="command" advanced="true">
+		<item-type>String</item-type>
+		<label>Command string (json)</label>
+		<description>For composite settings.</description>
+	</channel-type>
+	
+	<channel-type id="reboot" advanced="true">
+		<item-type>Switch</item-type>
+		<label>Reboot</label>
+		<description>Reboot the thermostat.</description>
+	</channel-type>
+</thing:thing-descriptions>
