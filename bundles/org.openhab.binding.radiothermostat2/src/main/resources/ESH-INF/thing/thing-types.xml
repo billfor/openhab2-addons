@@ -10,28 +10,28 @@
 		<description>RadioThermostat Thermostat</description>
 
 		<channels>
-				<channel id="temperature" typeId="temperature" />
-				<channel id="heatingSetpoint" typeId="heatingSetpoint" />
-				<channel id="coolingSetpoint" typeId="coolingSetpoint" />
-				<channel id="setpoint" typeId="setpoint" />
-				
-				<channel id="mode" typeId="mode" /> 				<!--  string channel -->
-				<channel id="fan" typeId="fan" />					<!--  string channel -->
-				<channel id="hold" typeId="hold" />					<!--  switch -->
-	
-				<channel id="modeState" typeId="modeState" />  		<!-- readonly. actual state -->
-				<channel id="fanState" typeId="fanState" />			<!-- readonly. actual state -->
-	
-				<channel id="modeNumber" typeId="modeNumber" />  	<!--  mode as a number -->
-				<channel id="fanNumber" typeId="fanNumber" /> 		<!--  fan as a number -->
-	
-				<channel id="lastupdate" typeId="lastupdate" />
-	
-				<channel id="heatRuntimeYesterday" typeId="heatRuntimeYesterday" />
-				<channel id="coolRuntimeYesterday" typeId="coolRuntimeYesterday" />
-	
-				<channel id="command" typeId="command" />            
-				<channel id="reboot" typeId="reboot" />            
+			<channel id="temperature" typeId="temperature"/>
+			<channel id="heatingSetpoint" typeId="heatingSetpoint"/>
+			<channel id="coolingSetpoint" typeId="coolingSetpoint"/>
+			<channel id="setpoint" typeId="setpoint"/>
+
+			<channel id="mode" typeId="mode"/> 				<!-- string channel -->
+			<channel id="fan" typeId="fan"/>					<!-- string channel -->
+			<channel id="hold" typeId="hold"/>					<!-- switch -->
+
+			<channel id="modeState" typeId="modeState"/>  		<!-- readonly. actual state -->
+			<channel id="fanState" typeId="fanState"/>			<!-- readonly. actual state -->
+
+			<channel id="modeNumber" typeId="modeNumber"/>  	<!-- mode as a number -->
+			<channel id="fanNumber" typeId="fanNumber"/> 		<!-- fan as a number -->
+
+			<channel id="lastupdate" typeId="lastupdate"/>
+
+			<channel id="heatRuntimeYesterday" typeId="heatRuntimeYesterday"/>
+			<channel id="coolRuntimeYesterday" typeId="coolRuntimeYesterday"/>
+
+			<channel id="command" typeId="command"/>
+			<channel id="reboot" typeId="reboot"/>
 		</channels>
 
 		<properties>
@@ -40,7 +40,7 @@
 			<property name="name"></property>
 			<property name="firmwareVersion"></property>
 		</properties>
-		<representation-property>uuid</representation-property>        
+		<representation-property>uuid</representation-property>
 
 		<config-description>
 			<parameter name="ip" type="text" required="true">
@@ -55,7 +55,7 @@
 		</config-description>
 
 	</thing-type>
-	
+
 	<channel-type id="fan">
 		<item-type>String</item-type>
 		<label>Fan setting</label>
@@ -63,7 +63,7 @@
 		<state readOnly="false">
 			<options>
 				<option value="auto">Auto</option>
-				<option value="circulate">Auto/Circulate</option> 
+				<option value="circulate">Auto/Circulate</option>
 				<option value="on">On</option>
 			</options>
 		</state>
@@ -74,7 +74,7 @@
 		<label>Hold Setting</label>
 		<description>Hold on or off.</description>
 	</channel-type>
-	
+
 	<channel-type id="mode">
 		<item-type>String</item-type>
 		<label>System Mode</label>
@@ -101,7 +101,7 @@
 		<label>Mode State</label>
 		<description>Actual mode of the thermostat.</description>
 		<state readOnly="true"/>
-	</channel-type>    
+	</channel-type>
 
 	<channel-type id="modeNumber" advanced="true">
 		<item-type>Number</item-type>
@@ -113,7 +113,7 @@
 		<item-type>Number</item-type>
 		<label>Fan number.</label>
 		<description>Fan as an integer</description>
-	</channel-type>    
+	</channel-type>
 
 	<channel-type id="hold">
 		<item-type>Switch</item-type>
@@ -126,7 +126,7 @@
 		<label>Current Setpoint</label>
 		<description>Current Setpoint (Heating or Cooling)</description>
 		<category>Temperature</category>
-		<state readOnly="false" pattern="%.1f %unit%" min="0" max="80" step="0.5" />
+		<state readOnly="false" pattern="%.1f %unit%" min="0" max="80" step="0.5"/>
 	</channel-type>
 
 	<channel-type id="heatingSetpoint" advanced="true">
@@ -134,7 +134,7 @@
 		<label>Heating Setpoint</label>
 		<description>Heating Setpoint</description>
 		<category>Temperature</category>
-		<state readOnly="false" pattern="%.1f %unit%" min="0" max="80" step="0.5" />
+		<state readOnly="false" pattern="%.1f %unit%" min="0" max="80" step="0.5"/>
 	</channel-type>
 
 	<channel-type id="coolingSetpoint" advanced="true">
@@ -142,7 +142,7 @@
 		<label>Cooling Setpoint</label>
 		<description>Cooling Setpoint</description>
 		<category>Temperature</category>
-		<state readOnly="false" pattern="%.1f %unit%" min="32" max="95" step="0.5" />
+		<state readOnly="false" pattern="%.1f %unit%" min="32" max="95" step="0.5"/>
 	</channel-type>
 
 	<channel-type id="temperature">
@@ -158,7 +158,7 @@
 		<item-type>DateTime</item-type>
 		<label>Last update</label>
 		<description>Time of last update from the thermostat.</description>
-		<state readOnly="true" pattern="%1$tH:%1$tM" />
+		<state readOnly="true" pattern="%1$tH:%1$tM"/>
 	</channel-type>
 
 	<channel-type id="heatRuntimeYesterday" advanced="true">
@@ -167,7 +167,7 @@
 		<description>Elapsed time spent heating yesterday in minutes.</description>
 		<state readOnly="true" pattern="%d %unit%"/>
 	</channel-type>
-	
+
 	<channel-type id="coolRuntimeYesterday" advanced="true">
 		<item-type>Number:Time</item-type>
 		<label>Cooling time ON yesterday</label>
@@ -180,7 +180,7 @@
 		<label>Command string (json)</label>
 		<description>For composite settings.</description>
 	</channel-type>
-	
+
 	<channel-type id="reboot" advanced="true">
 		<item-type>Switch</item-type>
 		<label>Reboot</label>

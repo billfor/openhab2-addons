@@ -52,7 +52,6 @@ public class RadioThermostatTstat {
          * throw (new IllegalArgumentException("Invalid system mode " + mode));
          * }
          */
-
     }
 
     public enum Fmode {
@@ -133,5 +132,4 @@ public class RadioThermostatTstat {
     public int getModeNumber() {
         return tmode.ordinal();
     }
-
 }

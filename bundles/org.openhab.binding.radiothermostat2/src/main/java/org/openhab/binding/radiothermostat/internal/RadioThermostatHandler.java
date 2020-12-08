@@ -449,7 +449,6 @@ public class RadioThermostatHandler extends BaseThingHandler {
         if (isFutureValid(localUpdatesTask2)) {
             localUpdatesTask2.cancel(false);
         }
-
     }
 
     private boolean isFutureValid(@Nullable Future<?> future) {
@@ -530,5 +529,4 @@ public class RadioThermostatHandler extends BaseThingHandler {
         Map<String, String> properties = this.thing.getProperties();
         return new HashMap<>(properties);
     }
-
 }
