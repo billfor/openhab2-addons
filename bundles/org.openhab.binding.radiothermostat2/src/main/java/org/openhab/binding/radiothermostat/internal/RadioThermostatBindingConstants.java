@@ -54,6 +54,8 @@ public class RadioThermostatBindingConstants {
 
     public static final String CHANNEL_HEAT_RUNTIME_YESTERDAY = "heatRuntimeYesterday";
     public static final String CHANNEL_COOL_RUNTIME_YESTERDAY = "coolRuntimeYesterday";
+    public static final String CHANNEL_HEAT_RUNTIME_TODAY = "heatRuntimeToday";
+    public static final String CHANNEL_COOL_RUNTIME_TODAY = "coolRuntimeToday";
 
     public static final String CHANNEL_FAN_NUMBER = "fanNumber";
     public static final String CHANNEL_MODE_NUMBER = "modeNumber";

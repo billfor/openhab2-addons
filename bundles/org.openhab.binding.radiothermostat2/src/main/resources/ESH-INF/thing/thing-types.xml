@@ -29,6 +29,9 @@
 
 			<channel id="heatRuntimeYesterday" typeId="heatRuntimeYesterday"/>
 			<channel id="coolRuntimeYesterday" typeId="coolRuntimeYesterday"/>
+			<channel id="heatRuntimeToday" typeId="heatRuntimeToday"/>
+			<channel id="coolRuntimeToday" typeId="coolRuntimeToday"/>
+
 
 			<channel id="command" typeId="command"/>
 			<channel id="reboot" typeId="reboot"/>
@@ -159,6 +162,20 @@
 		<label>Last update</label>
 		<description>Time of last update from the thermostat.</description>
 		<state readOnly="true" pattern="%1$tH:%1$tM"/>
+	</channel-type>
+
+	<channel-type id="heatRuntimeToday" advanced="true">
+		<item-type>Number:Time</item-type>
+		<label>Heating time ON Today</label>
+		<description>Elapsed time spent heating today in minutes.</description>
+		<state readOnly="true" pattern="%d %unit%"/>
+	</channel-type>
+
+	<channel-type id="coolRuntimeToday" advanced="true">
+		<item-type>Number:Time</item-type>
+		<label>Cooling time ON Today</label>
+		<description>Elapsed time spent cooling today in minutes.</description>
+		<state readOnly="true" pattern="%d %unit%"/>
 	</channel-type>
 
 	<channel-type id="heatRuntimeYesterday" advanced="true">

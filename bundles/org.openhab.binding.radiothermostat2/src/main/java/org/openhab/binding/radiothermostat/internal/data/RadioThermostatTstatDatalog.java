@@ -22,8 +22,12 @@ package org.openhab.binding.radiothermostat.internal.data;
 
 public class RadioThermostatTstatDatalog {
 
-    // private RunMode today; // don't really need this during the day?
+    private RunMode today; // don't really need this during the day?
     private RunMode yesterday;
+
+    public RunMode getToday() {
+        return today;
+    }
 
     public RunMode getYesterday() {
         return yesterday;

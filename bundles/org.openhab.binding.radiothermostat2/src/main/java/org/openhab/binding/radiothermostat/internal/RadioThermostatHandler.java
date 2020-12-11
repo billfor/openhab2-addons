@@ -417,13 +417,21 @@ public class RadioThermostatHandler extends BaseThingHandler {
             logger.debug("datalog {}", response);
 
             datalog = gson.fromJson(response, RadioThermostatTstatDatalog.class);
-            int cool_usage = datalog.getYesterday().getCool().getUsage();
-            int heat_usage = datalog.getYesterday().getHeat().getUsage();
-            logger.debug("usage cool: {} heat: {}", cool_usage, heat_usage);
+            int cool_usage, heat_usage;
+            cool_usage = datalog.getYesterday().getCool().getUsage();
+            heat_usage = datalog.getYesterday().getHeat().getUsage();
+            logger.debug("yesterdays usage - cool: {} heat: {}", cool_usage, heat_usage);
             // updateState(CHANNEL_STATUS_HOURS, new QuantityType<>(info.getStatus().getHours(), SmartHomeUnits.HOUR));
 
             updateState(CHANNEL_HEAT_RUNTIME_YESTERDAY, new QuantityType<>(heat_usage, SmartHomeUnits.MINUTE));
             updateState(CHANNEL_COOL_RUNTIME_YESTERDAY, new QuantityType<>(cool_usage, SmartHomeUnits.MINUTE));
+
+            cool_usage = datalog.getToday().getCool().getUsage();
+            heat_usage = datalog.getToday().getHeat().getUsage();
+            logger.debug("todays usage - cool: {} heat: {}", cool_usage, heat_usage);
+
+            updateState(CHANNEL_HEAT_RUNTIME_TODAY, new QuantityType<>(heat_usage, SmartHomeUnits.MINUTE));
+            updateState(CHANNEL_COOL_RUNTIME_TODAY, new QuantityType<>(cool_usage, SmartHomeUnits.MINUTE));
 
             goOnline();
         } catch (RadioThermostatCommunicationException | JsonSyntaxException e) {
