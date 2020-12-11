@@ -72,12 +72,6 @@
 		</state>
 	</channel-type>
 
-	<channel-type id="hold">
-		<item-type>Switch</item-type>
-		<label>Hold Setting</label>
-		<description>Hold on or off.</description>
-	</channel-type>
-
 	<channel-type id="mode">
 		<item-type>String</item-type>
 		<label>System Mode</label>
