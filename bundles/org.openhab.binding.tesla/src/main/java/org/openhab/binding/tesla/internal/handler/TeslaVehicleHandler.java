@@ -952,7 +952,8 @@ public class TeslaVehicleHandler extends BaseThingHandler {
                 wakeUp();
             } else {
                 if (isAwake()) {
-                    logger.debug("Vehicle is neither charging nor moving, skipping updates to allow it to sleep");
+                    logger.debug(
+                            "slowState: Vehicle is neither charging nor moving, skipping updates to allow it to sleep");
                 }
             }
         }
@@ -970,7 +971,8 @@ public class TeslaVehicleHandler extends BaseThingHandler {
                     wakeUp();
                 } else {
                     if (isAwake()) {
-                        logger.debug("Vehicle is neither charging nor moving, skipping updates to allow it to sleep");
+                        logger.debug(
+                                "fastState: Vehicle is neither charging nor moving, skipping updates to allow it to sleep");
                     }
                 }
             }
