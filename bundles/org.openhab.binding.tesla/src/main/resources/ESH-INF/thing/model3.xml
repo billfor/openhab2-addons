@@ -131,6 +131,11 @@
 				<label>Allow Wake-Up</label>
 				<description>Allows waking up the vehicle. Caution: This can result in huge vampire drain!</description>
 			</parameter>
+			<parameter name="inactivity" type="integer" min="5" required="true">
+				<label>Inactivity interval</label>
+				<description>The inactivity period in minutes, after which the binding waits for the car to sleep.</description>
+				<default>5</default>
+			</parameter>
 		</config-description>
 
 	</thing-type>

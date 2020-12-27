@@ -94,7 +94,6 @@ public class TeslaVehicleHandler extends BaseThingHandler {
     private static final int EVENT_MAXIMUM_ERRORS_IN_INTERVAL = 10;
     private static final int EVENT_ERROR_INTERVAL_SECONDS = 15;
     private static final int API_SLEEP_INTERVAL_MINUTES = 20;
-    private static final int MOVE_THRESHOLD_INTERVAL_MINUTES = 5;
 
     private final Logger logger = LoggerFactory.getLogger(TeslaVehicleHandler.class);
 
@@ -116,6 +115,7 @@ public class TeslaVehicleHandler extends BaseThingHandler {
     protected int apiIntervalErrors;
     protected long eventIntervalTimestamp;
     protected int eventIntervalErrors;
+    protected int inactivity;
     protected ReentrantLock lock;
 
     protected double lastLongitude;
@@ -150,6 +150,8 @@ public class TeslaVehicleHandler extends BaseThingHandler {
         logger.trace("Initializing the Tesla handler for {}", getThing().getUID());
         updateStatus(ThingStatus.UNKNOWN);
         allowWakeUp = (boolean) getConfig().get(TeslaBindingConstants.CONFIG_ALLOWWAKEUP);
+        inactivity = ((BigDecimal) getConfig().get(TeslaBindingConstants.CONFIG_INACTIVITY)).intValue();
+        logger.trace("Inactivity period set to {} minutes.", inactivity);
 
         // the streaming API seems to be broken - let's keep the code, if it comes back one day
         // enableEvents = (boolean) getConfig().get(TeslaBindingConstants.CONFIG_ENABLEEVENTS);
@@ -531,8 +533,7 @@ public class TeslaVehicleHandler extends BaseThingHandler {
     }
 
     protected boolean hasMovedInSleepInterval() {
-        return lastLocationChangeTimestamp > (System.currentTimeMillis()
-                - (MOVE_THRESHOLD_INTERVAL_MINUTES * 60 * 1000));
+        return lastLocationChangeTimestamp > (System.currentTimeMillis() - (inactivity * 60 * 1000));
     }
 
     protected boolean allowQuery() {
