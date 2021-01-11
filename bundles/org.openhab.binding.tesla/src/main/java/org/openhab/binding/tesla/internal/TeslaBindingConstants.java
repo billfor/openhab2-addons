@@ -104,4 +104,5 @@ public class TeslaBindingConstants {
     public static final String CONFIG_USERNAME = "username";
     public static final String CONFIG_PASSWORD = "password";
     public static final String CONFIG_INACTIVITY = "inactivity";
+    public static final String CONFIG_USEDRIVESTATE = "useDriveState";
 }
