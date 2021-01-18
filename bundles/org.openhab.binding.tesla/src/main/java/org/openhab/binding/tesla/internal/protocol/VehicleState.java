@@ -23,6 +23,7 @@ public class VehicleState {
     public boolean dark_rims;
     public boolean has_spoiler;
     public boolean homelink_nearby;
+    public boolean is_user_present;
     public boolean locked;
     public boolean notifications_supported;
     public boolean parsed_calendar_supported;
